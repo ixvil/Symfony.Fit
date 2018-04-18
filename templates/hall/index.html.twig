@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hall index{% endblock %}
+
+{% block body %}
+    <h1>Hall index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for hall in halls %}
+            <tr>
+                <td>{{ hall.id }}</td>
+                <td>{{ hall.name }}</td>
+                <td>
+                    <a href="{{ path('hall_show', {'id': hall.id}) }}">show</a>
+                    <a href="{{ path('hall_edit', {'id': hall.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('hall_new') }}">Create new</a>
+{% endblock %}
