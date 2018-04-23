@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}LessonType index{% endblock %}
+
+{% block body %}
+    <h1>LessonType index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for lesson_type in lesson_types %}
+            <tr>
+                <td>{{ lesson_type.id }}</td>
+                <td>{{ lesson_type.name }}</td>
+                <td>
+                    <a href="{{ path('lesson_type_show', {'id': lesson_type.id}) }}">show</a>
+                    <a href="{{ path('lesson_type_edit', {'id': lesson_type.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('lesson_type_new') }}">Create new</a>
+{% endblock %}

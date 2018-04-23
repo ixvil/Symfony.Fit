@@ -36,7 +36,7 @@ class User
     private $name;
 
     /**
-     * @var \UserType
+     * @var UserType
      *
      * @ORM\ManyToOne(targetEntity="UserType")
      * @ORM\JoinColumns({

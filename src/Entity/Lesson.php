@@ -22,7 +22,7 @@ class Lesson
     private $id;
 
     /**
-     * @var \Hall
+     * @var Hall
      *
      * @ORM\ManyToOne(targetEntity="Hall")
      * @ORM\JoinColumns({
@@ -32,7 +32,7 @@ class Lesson
     private $hall;
 
     /**
-     * @var \LessonSet
+     * @var LessonSet
      *
      * @ORM\ManyToOne(targetEntity="LessonSet")
      * @ORM\JoinColumns({
@@ -40,6 +40,14 @@ class Lesson
      * })
      */
     private $lessonSet;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="start_date_time", type="datetime", nullable=false)
+     *
+     */
+    private $startDateTime;
 
     public function getId(): ?int
     {
@@ -68,6 +76,24 @@ class Lesson
         $this->lessonSet = $lessonSet;
 
         return $this;
+    }
+
+    /**
+     * @param \DateTime $startDateTime
+     * @return Lesson
+     */
+    public function setStartDateTime(\DateTime $startDateTime): Lesson
+    {
+        $this->startDateTime = $startDateTime;
+        return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getStartDateTime(): \DateTime
+    {
+        return $this->startDateTime;
     }
 
 
