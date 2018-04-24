@@ -28,6 +28,14 @@ class LessonType
      */
     private $name;
 
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="image", type="string", length=256, nullable=true)
+     */
+    private $image;
+
+
     public function getId(): ?int
     {
         return $this->id;
@@ -43,6 +51,24 @@ class LessonType
         $this->name = $name;
 
         return $this;
+    }
+
+    /**
+     * @param null|string $image
+     * @return LessonType
+     */
+    public function setImage(?string $image): LessonType
+    {
+        $this->image = $image;
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getImage(): ?string
+    {
+        return $this->image;
     }
 
 

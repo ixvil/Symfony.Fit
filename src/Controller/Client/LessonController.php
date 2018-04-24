@@ -10,6 +10,7 @@ namespace App\Controller\Client;
 
 
 use App\Entity\Lesson;
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -26,8 +27,8 @@ class LessonController extends Controller
     {
         $lessons = $this->getDoctrine()
             ->getRepository(Lesson::class)
-            ->findAll();
+            ->findBy([], ['startDateTime' => 'asc']);
 
-        return $this->json($lessons);
+        return $this->json($lessons, 200, ['Access-Control-Allow-Origin' => "*"]);
     }
 }
