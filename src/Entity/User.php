@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 /**
  * User
@@ -37,7 +38,7 @@ class User
 
     /**
      * @var UserType
-     *
+     * @MaxDepth(1)
      * @ORM\ManyToOne(targetEntity="UserType")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="type_id", referencedColumnName="id")

@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class UserType
 {
+    const CLIENT = 1;
     /**
      * @var int
      *

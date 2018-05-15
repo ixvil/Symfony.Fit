@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 /**
  * LessonSet
@@ -29,7 +30,8 @@ class LessonSet
     private $name;
 
     /**
-     * @var \LessonType
+     * @var LessonType
+     * @MaxDepth(1)
      *
      * @ORM\ManyToOne(targetEntity="LessonType")
      * @ORM\JoinColumns({
@@ -39,8 +41,15 @@ class LessonSet
     private $lessonType;
 
     /**
-     * @var \User
+     * @var integer
      *
+     * @ORM\Column(name="users_limit", type="integer")
+     */
+    private $usersLimit;
+
+    /**
+     * @var User
+     * @MaxDepth(1)
      * @ORM\ManyToOne(targetEntity="User")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="trainer_user_id", referencedColumnName="id")
@@ -87,6 +96,24 @@ class LessonSet
         $this->trainerUser = $trainerUser;
 
         return $this;
+    }
+
+    /**
+     * @param int $usersLimit
+     * @return LessonSet
+     */
+    public function setUsersLimit(int $usersLimit): LessonSet
+    {
+        $this->usersLimit = $usersLimit;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getUsersLimit(): int
+    {
+        return $this->usersLimit;
     }
 
 

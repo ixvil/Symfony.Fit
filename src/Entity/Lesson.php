@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 /**
  * Lesson
@@ -23,6 +25,7 @@ class Lesson
 
     /**
      * @var Hall
+     * @MaxDepth(1)
      *
      * @ORM\ManyToOne(targetEntity="Hall")
      * @ORM\JoinColumns({
@@ -33,13 +36,20 @@ class Lesson
 
     /**
      * @var LessonSet
-     *
+     * @MaxDepth(1)
      * @ORM\ManyToOne(targetEntity="LessonSet")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="lesson_set_id", referencedColumnName="id")
      * })
      */
     private $lessonSet;
+
+    /**
+     * @var Collection
+     * @MaxDepth(1)
+     * @ORM\OneToMany(targetEntity="LessonUser", mappedBy="lesson")
+     */
+    private $lessonUsers;
 
     /**
      * @var \DateTime
@@ -94,6 +104,24 @@ class Lesson
     public function getStartDateTime(): \DateTime
     {
         return $this->startDateTime;
+    }
+
+    /**
+     * @param Collection $lessonUsers
+     * @return Lesson
+     */
+    public function setLessonUsers(Collection $lessonUsers): Lesson
+    {
+        $this->lessonUsers = $lessonUsers;
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getLessonUsers(): Collection
+    {
+        return $this->lessonUsers;
     }
 
 
