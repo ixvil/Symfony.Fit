@@ -9,12 +9,19 @@
 namespace App\Controller\Client;
 
 use App\Entity\User;
+use App\Entity\UserToken;
 use App\Entity\UserType;
+use App\Service\Auth\CodeChecker;
+use App\Service\Auth\CodeProcessor;
+use App\Service\Auth\Token\Creator;
+use App\Service\Auth\Token\TokenGenerator;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -22,6 +29,36 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class AuthorizeController extends Controller
 {
+    /**
+     * @var CodeProcessor
+     */
+    private $codeProcessor;
+    /**
+     * @var CodeChecker
+     */
+    private $codeChecker;
+    /**
+     * @var Creator
+     */
+    private $tokenCreator;
+    /**
+     * @var TokenGenerator
+     */
+    private $tokenGenerator;
+
+    public function __construct(
+        CodeProcessor $codeProcessor,
+        CodeChecker $codeChecker,
+        Creator $tokenCreator,
+        TokenGenerator $tokenGenerator
+    )
+    {
+        $this->codeProcessor = $codeProcessor;
+        $this->codeChecker = $codeChecker;
+        $this->tokenCreator = $tokenCreator;
+        $this->tokenGenerator = $tokenGenerator;
+    }
+
     /** @var EntityRepository $userRepo */
     private $userRepo;
 
@@ -37,11 +74,24 @@ class AuthorizeController extends Controller
     {
 
         $content = json_decode($request->getContent());
-
         $phoneNumber = $content->phone;
-        $newCode = '1111'; //TODO:: write to temp table
 
-        return $this->json(['status' => 'ok', $phoneNumber, $newCode], 200, ['Access-Control-Allow-Origin' => "*"]);
+        $this->userRepo = $this->getDoctrine()->getRepository(User::class);
+        $this->entityManager = $this->getDoctrine()->getManager();
+
+        $userCollection = $this->userRepo->matching(
+            Criteria::create()
+                ->andWhere(Criteria::expr()->eq('phone', $phoneNumber))
+        );
+        if ($userCollection->count() !== 0) {
+            $user = $userCollection->get(0);
+        } else {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        $this->codeProcessor->process($user);
+
+        return $this->json(['status' => 'ok'], 200, ['Access-Control-Allow-Origin' => "*"]);
     }
 
     /**
@@ -54,11 +104,7 @@ class AuthorizeController extends Controller
         $content = json_decode($request->getContent());
 
         $phoneNumber = $content->phone;
-        $code = $content->code; //TODO:: check from temp table
-
-        if ($code != '1111') {
-            return $this->json(['status' => false], 200, ['Access-Control-Allow-Origin' => "*"]);
-        }
+        $code = $content->code;
 
         $this->userRepo = $this->getDoctrine()->getRepository(User::class);
         $this->entityManager = $this->getDoctrine()->getManager();
@@ -79,9 +125,49 @@ class AuthorizeController extends Controller
             $user = $userCollection->get(0);
         }
 
+        if (!$this->codeChecker->check($code, $user)) {
+            return $this->json(['status' => false], 200, ['Access-Control-Allow-Origin' => "*"]);
+        }
+
+        $frontToken = $this->tokenCreator->create($user);
+
         $this->entityManager->flush();
 
+        return $this->json(['user' => $user, 'status' => true, 'token' => $frontToken], 200, ['Access-Control-Allow-Origin' => "*"]);
+    }
+
+    /**
+     * @Route("/tokenLogin/", name="client_auth_post_token_login", methods="POST")
+     * @param Request $request
+     * @return Response
+     */
+    public function postTokenLogin(Request $request): Response
+    {
+        $content = json_decode($request->getContent());
+
+        $userId = $content->userId;
+        $frontToken = $content->token;
+
+        $this->userRepo = $this->getDoctrine()->getRepository(User::class);
+        $user = $this->userRepo->find($userId);
+        if (!$user instanceof User) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        $userTokenRepository = $this->getDoctrine()->getRepository(UserToken::class);
+        $userTokenCollection = $userTokenRepository->matching(
+            Criteria::create()
+                ->andWhere(Criteria::expr()->eq('user', $user))
+                ->andWhere(Criteria::expr()->eq('token', $this->tokenGenerator->generateSaltedToken($frontToken)))
+                ->andWhere(Criteria::expr()->eq('isActive', 1))
+        );
+
+        if ($userTokenCollection->count() === 0) {
+            throw new AccessDeniedHttpException();
+        }
+
         return $this->json(['user' => $user, 'status' => true], 200, ['Access-Control-Allow-Origin' => "*"]);
+
     }
 
 }

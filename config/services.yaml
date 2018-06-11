@@ -24,5 +24,43 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    App\Controller\Client\AuthorizeController:
+      arguments:
+        - '@fit.service.auth.code.processor'
+        - '@fit.service.auth.code.checker'
+
+
+    fit.service.auth.code.processor:
+      class: App\Service\Auth\CodeProcessor
+      arguments:
+        - '@fit.service.auth.code.generator'
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.sms.sender'
+
+    fit.service.auth.code.generator:
+      class: App\Service\Auth\CodeGenerator
+
+    fit.service.auth.code.checker:
+      class: App\Service\Auth\CodeChecker
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+
+    fit.service.auth.token.creator:
+      class: App\Service\Auth\Token\Creator
+
+
+    fit.service.sms.api.atomic:
+      class: App\Service\Sms\AtomicApi
+      arguments:
+        - '@guzzle'
+
+    fit.service.sms.sender:
+      class: App\Service\Sms\Sender
+      arguments:
+        - '@fit.service.sms.api.atomic'
+
+    guzzle:
+      class: GuzzleHttp\Client
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
