@@ -14,7 +14,10 @@ use App\Entity\LessonUser;
 use DateTime;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityRepository;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Serializer;
@@ -22,12 +25,14 @@ use Symfony\Component\Serializer\Serializer;
 /**
  * @Route("/lesson")
  */
-class LessonController extends Controller
+class LessonController extends AbstractController
 {
     /**
-     * @Route("/", name="lesson_index", methods="GET")
+     * @Route("/", name="lesson_index", methods={"GET"})
+     * @param Request $request
+     * @return Response
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         /** @var EntityRepository $repo */
         $repo = $this->getDoctrine()->getRepository(Lesson::class);
@@ -45,9 +50,10 @@ class LessonController extends Controller
             /** @var LessonUser $lessonUser */
             foreach ($lessonUsers as $lessonUser) {
                 $lessonUser->setLesson(null);
+                $lessonUser->getUser()->setUserTickets(null);
             }
         }
 
-        return $this->json($lessons, 200, ['Access-Control-Allow-Origin' => "*"]);
+        return $this->json($lessons, 200);
     }
 }

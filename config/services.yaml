@@ -24,11 +24,39 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    App\Controller\Client\PromoCodeController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@fit.service.promocode.activator'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+    App\Controller\Client\LessonController:
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+    App\Controller\Client\LessonUserController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.lesson_applier'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
     App\Controller\Client\AuthorizeController:
       arguments:
         - '@fit.service.auth.code.processor'
         - '@fit.service.auth.code.checker'
-
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
 
     fit.service.auth.code.processor:
       class: App\Service\Auth\CodeProcessor
@@ -48,6 +76,26 @@ services:
     fit.service.auth.token.creator:
       class: App\Service\Auth\Token\Creator
 
+    fit.service.auth.token.generator:
+      class: App\Service\Auth\Token\TokenGenerator
+
+    fit.service.lesson_applier:
+      class: App\Service\LessonUser\LessonApplier
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+    fit.service.promocode.activator:
+      class: App\Service\PromoCode\Activator
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
 
     fit.service.sms.api.atomic:
       class: App\Service\Sms\AtomicApi

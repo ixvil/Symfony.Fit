@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 
@@ -35,6 +36,13 @@ class User
      * @ORM\Column(name="name", type="string", length=256, nullable=true)
      */
     private $name;
+
+    /**
+     * @var Collection
+     * @MaxDepth(1)
+     * @ORM\OneToMany(targetEntity="App\Entity\UserTicket", mappedBy="user")
+     */
+    private $userTickets;
 
     /**
      * @var UserType
@@ -87,5 +95,30 @@ class User
         return $this;
     }
 
+    /**
+     * @param Collection $userTickets
+     * @return User
+     */
+    public function setUserTickets(?Collection $userTickets): User
+    {
+        $this->userTickets = $userTickets;
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getUserTickets(): ?Collection
+    {
+        return $this->userTickets;
+    }
+
+    public function clearCircularReferences()
+    {
+        /** @var UserTicket $userTicket */
+        foreach ($this->userTickets as $userTicket) {
+            $userTicket->setUser(null);
+        }
+    }
 
 }

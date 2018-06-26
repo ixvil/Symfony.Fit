@@ -9,6 +9,7 @@
 namespace App\Controller\Client;
 
 use App\Entity\User;
+use App\Entity\UserTicket;
 use App\Entity\UserToken;
 use App\Entity\UserType;
 use App\Service\Auth\CodeChecker;
@@ -27,7 +28,7 @@ use Symfony\Component\Routing\Annotation\Route;
 /**
  * @Route("/auth")
  */
-class AuthorizeController extends Controller
+class AuthorizeController extends AbstractController
 {
     /**
      * @var CodeProcessor
@@ -41,10 +42,7 @@ class AuthorizeController extends Controller
      * @var Creator
      */
     private $tokenCreator;
-    /**
-     * @var TokenGenerator
-     */
-    private $tokenGenerator;
+
 
     public function __construct(
         CodeProcessor $codeProcessor,
@@ -56,7 +54,7 @@ class AuthorizeController extends Controller
         $this->codeProcessor = $codeProcessor;
         $this->codeChecker = $codeChecker;
         $this->tokenCreator = $tokenCreator;
-        $this->tokenGenerator = $tokenGenerator;
+        parent::__construct($tokenGenerator);
     }
 
     /** @var EntityRepository $userRepo */
@@ -132,7 +130,7 @@ class AuthorizeController extends Controller
         $frontToken = $this->tokenCreator->create($user);
 
         $this->entityManager->flush();
-
+        $user->clearCircularReferences();
         return $this->json(['user' => $user, 'status' => true, 'token' => $frontToken], 200, ['Access-Control-Allow-Origin' => "*"]);
     }
 
@@ -143,30 +141,17 @@ class AuthorizeController extends Controller
      */
     public function postTokenLogin(Request $request): Response
     {
-        $content = json_decode($request->getContent());
+        $this->auth($request);
 
-        $userId = $content->userId;
-        $frontToken = $content->token;
+        $user = $this->getCurrentUser();
 
-        $this->userRepo = $this->getDoctrine()->getRepository(User::class);
-        $user = $this->userRepo->find($userId);
-        if (!$user instanceof User) {
-            throw new UnprocessableEntityHttpException();
+        //Fucking hack to avoid circular exception
+        /** @var UserTicket $userTicket */
+        foreach ($user->getUserTickets() as $userTicket) {
+            $userTicket->setUser(null);
         }
 
-        $userTokenRepository = $this->getDoctrine()->getRepository(UserToken::class);
-        $userTokenCollection = $userTokenRepository->matching(
-            Criteria::create()
-                ->andWhere(Criteria::expr()->eq('user', $user))
-                ->andWhere(Criteria::expr()->eq('token', $this->tokenGenerator->generateSaltedToken($frontToken)))
-                ->andWhere(Criteria::expr()->eq('isActive', 1))
-        );
-
-        if ($userTokenCollection->count() === 0) {
-            throw new AccessDeniedHttpException();
-        }
-
-        return $this->json(['user' => $user, 'status' => true], 200, ['Access-Control-Allow-Origin' => "*"]);
+        return $this->json(['user' => $this->getCurrentUser(), 'status' => true], 200);
 
     }
 

@@ -12,10 +12,17 @@ namespace App\Controller\Client;
 use App\Entity\Lesson;
 use App\Entity\LessonUser;
 use App\Entity\User;
+use App\Entity\UserTicket;
 use App\Entity\UserType;
+use App\Service\Auth\Token\TokenGenerator;
+use App\Service\LessonUser\ApplyToLessonException;
+use App\Service\LessonUser\LessonApplier;
 use DateTime;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,84 +33,54 @@ use Symfony\Component\Routing\Annotation\Route;
 /**
  * @Route("/lessonUser")
  */
-class LessonUserController extends Controller
+class LessonUserController extends AbstractController
 {
 
     /** @var \Doctrine\Common\Persistence\ObjectManager $entityManager */
     private $entityManager;
 
-    /** @var EntityRepository $userRepo */
-    private $userRepo;
-
-    /** @var EntityRepository $userRepo */
-    private $lessonUserRepository;
-
-    /** @var EntityRepository $userRepo */
+    /** @var EntityRepository $lessonRepository */
     private $lessonRepository;
 
-    public function prep()
+    /**
+     * @var LessonApplier
+     */
+    private $lessonApplier;
+
+    public function __construct(
+        TokenGenerator $tokenGenerator,
+        EntityManager $entityManager,
+        LessonApplier $lessonApplier
+    )
     {
-        $this->entityManager = $this->getDoctrine()->getManager();
-        $this->userRepo = $this->getDoctrine()->getRepository(User::class);
-        $this->lessonUserRepository = $this->getDoctrine()->getRepository(LessonUser::class);
-        $this->lessonRepository = $this->getDoctrine()->getRepository(Lesson::class);
+        parent::__construct($tokenGenerator);
+        $this->lessonApplier = $lessonApplier;
+        $this->entityManager = $entityManager;
+        $this->lessonRepository = $entityManager->getRepository(Lesson::class);
     }
 
     /**
      * @Route("/", name="lessonUser_post", methods="POST")
      * @param Request $request
      * @return Response
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function post(Request $request): Response
     {
-        $this->prep();
+        $this->auth($request);
+        $user = $this->getCurrentUser();
         $content = json_decode($request->getContent());
-        $phoneNumber = $content->state->phone->phoneNumber;
         $lessonId = $content->state->dialog->id;
 
-        $userCollection = $this->userRepo->matching(
-            Criteria::create()
-                ->andWhere(Criteria::expr()->eq('phone', $phoneNumber))
-        );
-        if ($userCollection->count() == 0) {
-            $user = new User();
-            $user
-                ->setPhone($phoneNumber)
-                ->setName('auto')
-                ->setType($this->entityManager->find(UserType::class, 1));
-            $this->entityManager->persist($user);
-        } else {
-            $user = $userCollection->get(0);
-        }
         /** @var Lesson $lesson */
         $lesson = $this->lessonRepository->find($lessonId);
 
-        if (count($lesson->getLessonUsers()) >= $lesson->getLessonSet()->getUsersLimit()) {
-            return new JsonResponse(
-                json_encode(['error' => 'Записи на это занятие больше нет']),
-                400,
-                ['Access-Control-Allow-Origin' => "*"]
-            );
+        try {
+            $this->lessonApplier->applyToLesson($lesson, $user);
+        } catch (ApplyToLessonException $e) {
+            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
         }
-
-        $lessonUserCollection = $this->lessonUserRepository->matching(
-            Criteria::create()
-                ->andWhere(Criteria::expr()->eq('user', $user))
-                ->andWhere(Criteria::expr()->eq('lesson', $lesson))
-        );
-        if ($lessonUserCollection->count() == 0) {
-            $lessonUser = new LessonUser();
-            $lessonUser->setUser($user)->setLesson($lesson);
-            $this->entityManager->persist($lessonUser);
-        } else {
-            return new JsonResponse(
-                json_encode(['error' => 'Вы уже записаны на это занятие']),
-                400,
-                ['Access-Control-Allow-Origin' => "*"]
-            );
-        }
-
-        $this->entityManager->flush();
 
         $lessons = $this->lessonRepository->matching(
             Criteria::create()
@@ -118,9 +95,10 @@ class LessonUserController extends Controller
             /** @var LessonUser $lessonUser */
             foreach ($lessonUsers as $lessonUser) {
                 $lessonUser->setLesson(null);
+                $lessonUser->getUser()->setUserTickets(null);
             }
         }
 
-        return $this->json($lessons, 200, ['Access-Control-Allow-Origin' => "*"]);
+        return $this->json(['lessons' => $lessons, 'user' => $user], 200);
     }
 }
