@@ -84,9 +84,17 @@ class AuthorizeController extends AbstractController
         if ($userCollection->count() !== 0) {
             $user = $userCollection->get(0);
         } else {
-            throw new UnprocessableEntityHttpException();
+
+            $user = new User();
+            $user
+                ->setPhone($phoneNumber)
+                ->setName('')
+                ->setType($this->entityManager->find(UserType::class, 3));
+            $this->entityManager->persist($user);
+
         }
 
+        $this->entityManager->flush();
         $this->codeProcessor->process($user);
 
         return $this->json(['status' => 'ok'], 200, ['Access-Control-Allow-Origin' => "*"]);
@@ -145,13 +153,9 @@ class AuthorizeController extends AbstractController
 
         $user = $this->getCurrentUser();
 
-        //Fucking hack to avoid circular exception
-        /** @var UserTicket $userTicket */
-        foreach ($user->getUserTickets() as $userTicket) {
-            $userTicket->setUser(null);
-        }
+        $user->clearCircularReferences();
 
-        return $this->json(['user' => $this->getCurrentUser(), 'status' => true], 200);
+        return $this->json(['user' => $user, 'status' => true], 200);
 
     }
 

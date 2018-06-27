@@ -44,7 +44,6 @@ class PromoCodeController extends AbstractController
     {
         $this->auth($request);
         $user = $this->getCurrentUser();
-        $user->clearCircularReferences();
 
         $content = json_decode($request->getContent());
         $promoCodeString = $content->promoCode;
@@ -55,7 +54,7 @@ class PromoCodeController extends AbstractController
             return $this->json(['error' => 'Введен неверный промокод'], 422);
         }
 
-        return $this->json($user);
+        return $this->json($user->clearCircularReferences());
     }
 
 }

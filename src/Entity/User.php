@@ -113,12 +113,16 @@ class User
         return $this->userTickets;
     }
 
+    /**
+     * @return $this
+     */
     public function clearCircularReferences()
     {
         /** @var UserTicket $userTicket */
         foreach ($this->userTickets as $userTicket) {
             $userTicket->setUser(null);
         }
+        return $this;
     }
 
 }
