@@ -101,11 +101,25 @@ services:
       class: App\Service\Sms\AtomicApi
       arguments:
         - '@guzzle'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+    fit.service.sms.api.smsc:
+      class: App\Service\Sms\SmscApi
+      arguments:
+        - '@guzzle'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
 
     fit.service.sms.sender:
       class: App\Service\Sms\Sender
       arguments:
-        - '@fit.service.sms.api.atomic'
+        - '@fit.service.sms.api.smsc'
 
     guzzle:
       class: GuzzleHttp\Client

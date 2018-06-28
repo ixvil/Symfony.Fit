@@ -2,25 +2,27 @@
 /**
  * Created by PhpStorm.
  * User: ixvil
- * Date: 11/06/2018
- * Time: 01:05
+ * Date: 28/06/2018
+ * Time: 23:11
  */
 
 namespace App\Service\Sms;
 
+
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerAwareTrait;
 
-class AtomicApi implements SenderApiInterface
+class SmscApi implements SenderApiInterface
 {
+
     use LoggerAwareTrait;
 
     public $config = [
-        'host' => 'http://api.atompark.com/api/sms/3.0/sendSMS',
-        'public_key' => 'fa388e7ec22966c8422fa54126a1ff61',
-        'sender' => '79096511403',
-        'sms_lifetime' => '1'
+        'host' => 'https://smsc.ru/sys/send.php',
+        'login' => 'vk_516392',
+        'psw' => 'gvUYTIUhb345678JHGVH'
     ];
+
     /**
      * @var ClientInterface
      */
@@ -42,17 +44,11 @@ class AtomicApi implements SenderApiInterface
     public function send(string $phone, string $code): bool
     {
         $requestParams = [
-            'key' => $this->config['public_key'],
-            'sms_lifetime' => $this->config['sms_lifetime'],
-            'text' => $code,
-            'phone' => preg_replace('/[^0-9]/', '', $phone),
-            'sender' => $this->config['sender'],
-            'datetime' => '',
+            'login' => $this->config['login'],
+            'psw' => $this->config['psw'],
+            'phones' => $phone,
+            'mes' => $code
         ];
-
-        $controlSum = $this->countSum($requestParams);
-
-        $requestParams['sum'] = $controlSum;
 
         $url = $this->config['host'];
 
@@ -68,27 +64,5 @@ class AtomicApi implements SenderApiInterface
         }
 //        throw new \RuntimeException(print_r($requestParams, 1) . $response->getBody());
         return true;
-    }
-
-    /**
-     * @param array $requestParams
-     * @return string
-     */
-    private function countSum(array $requestParams): string
-    {
-
-        $params = $requestParams + [
-                'version' => '3.0',
-                'action' => 'sendSMS',
-//                'key' => $this->config['public_key']
-            ];
-        ksort($params);
-
-        $line = join('', $params);
-
-        $line .= getenv('ATOMIC_PRIVATE');
-//        return $line;
-        return md5($line);
-
     }
 }

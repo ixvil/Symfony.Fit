@@ -30,7 +30,7 @@ class Sender
     public function send(string $phone, int $code): void
     {
         if (getenv('SEND_SMS')) {
-            $this->senderApi->send($phone, 'Ваш код для авторизации на сайте stretchandgo.ru: ' . $code);
+            $this->senderApi->send($phone, 'Your login code for stretchandgo: ' . $code);
         }
     }
 }
