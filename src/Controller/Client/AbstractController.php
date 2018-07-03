@@ -80,6 +80,7 @@ abstract class AbstractController extends Controller
      */
     public function auth(Request $request): void
     {
+	$this->logger->info('cookies: '.print_r($_COOKIE, 1));
         $userId = $request->cookies->get(self::COOKIES_USER_ID);
         $frontToken = $request->cookies->get(self::COOKIES_AUTH_TOKEN);
         if (!$userId || !$frontToken) {
@@ -112,8 +113,7 @@ abstract class AbstractController extends Controller
     protected function json($data, int $status = 200, array $headers = array(), array $context = array()): JsonResponse
     {
         if (!isset($headers['Access-Control-Allow-Origin'])) {
-//            $headers['Access-Control-Allow-Origin'] = 'http://stretchandgo.ru';
-            $headers['Access-Control-Allow-Origin'] = 'http://localhost:3000';
+            $headers['Access-Control-Allow-Origin'] = 'https://stretchandgo.ru';
             $headers['Access-Control-Allow-Credentials'] = 'true';
         }
 
