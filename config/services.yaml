@@ -58,6 +58,15 @@ services:
           arguments:
             - '@logger'
 
+    App\Controller\Client\TicketController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@fit.service.user_ticket.buy'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
     fit.service.auth.code.processor:
       class: App\Service\Auth\CodeProcessor
       arguments:
@@ -115,6 +124,32 @@ services:
           arguments:
             - '@logger'
 
+    fit.service.sberbank.client:
+      class: App\Service\Sberbank\Client
+      arguments:
+        - '@guzzle'
+
+    fit.service.user_ticket.buy:
+      class: App\Service\UserTicket\Buy
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.sberbank.client'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+    fit.service.user_ticket.check:
+      public: true
+      class: App\Service\UserTicket\Check
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.sberbank.client'
+        - '@fit.service.user_ticket.buy'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
 
     fit.service.sms.sender:
       class: App\Service\Sms\Sender
