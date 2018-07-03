@@ -38,7 +38,7 @@ class RegisterCommand implements Command
         return [
             'token' => $this->token,
             'orderNumber' => $this->orderNumber,
-            'amount' => $this->amount * 100 * 0.8, //копейки превращает в рубли и делаем скидку в 20 процентов
+            'amount' => $this->amount * 100, //копейки превращает в рубли и делаем скидку в 20 процентов
             'returnUrl' => $this->returnUrl
         ];
     }
