@@ -74,7 +74,7 @@ class Check
             $command = new GetOrderStatus();
             $command->setOrderNumber($paymentOrder->getId());
             $answer = $this->sberbankClient->execute($command);
-            $this->logger->info(print_r($answer));
+            $this->logger->info($paymentOrder->getId().':: '.print_r($answer));
 
             if (isset($answer['orderStatus'])) {
                 $this->logger->info('Order status id ' . $answer['orderStatus']);
