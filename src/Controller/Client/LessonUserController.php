@@ -94,7 +94,7 @@ class LessonUserController extends AbstractController
             $lesson->clearCircularReferences();
         }
 
-        return $this->json(['lessons' => $lessons, 'user' => $user], 200);
+        return $this->json(['lessons' => $lessons, 'user' => $user->clearCircularReferences()], 200);
     }
 
     /**
