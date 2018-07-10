@@ -124,5 +124,19 @@ class Lesson
         return $this->lessonUsers;
     }
 
+    /**
+     * @return $this
+     */
+    public function clearCircularReferences()
+    {
+        $lessonUsers = $this->getLessonUsers();
+        /** @var LessonUser $lessonUser */
+        foreach ($lessonUsers as $lessonUser) {
+            $lessonUser->setLesson(null);
+            $lessonUser->getUser()->setUserTickets(null);
+        }
+
+        return $this;
+    }
 
 }

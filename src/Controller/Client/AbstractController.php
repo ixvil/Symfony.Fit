@@ -113,7 +113,7 @@ abstract class AbstractController extends Controller
     protected function json($data, int $status = 200, array $headers = array(), array $context = array()): JsonResponse
     {
         if (!isset($headers['Access-Control-Allow-Origin'])) {
-            $headers['Access-Control-Allow-Origin'] = 'https://stretchandgo.ru';
+            $headers['Access-Control-Allow-Origin'] = getenv('LOCAL_URL');
             $headers['Access-Control-Allow-Credentials'] = 'true';
         }
 

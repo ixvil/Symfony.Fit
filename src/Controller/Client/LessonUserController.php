@@ -60,6 +60,44 @@ class LessonUserController extends AbstractController
     }
 
     /**
+     * @Route("/delete", name="lessonUser_delete", methods="POST")
+     * @param Request $request
+     * @return Response
+     * @throws ORMException
+     */
+    public function delete(Request $request): Response
+    {
+        $this->auth($request);
+        $user = $this->getCurrentUser();
+
+        $content = json_decode($request->getContent());
+        $lessonId = $content->lesson->id;
+
+        /** @var Lesson $lesson */
+        $lesson = $this->lessonRepository->find($lessonId);
+
+        try {
+            $this->lessonApplier->unApplyToLesson($lesson, $user);
+        } catch (ApplyToLessonException $e) {
+            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+        }
+
+
+        $lessons = $this->lessonRepository->matching(
+            Criteria::create()
+                ->andWhere(Criteria::expr()->gte('startDateTime', new DateTime(date('Y-m-d'))))
+                ->orderBy(['startDateTime' => 'ASC'])
+        );
+
+        /** @var Lesson $lesson */
+        foreach ($lessons as $lesson) {
+            $lesson->clearCircularReferences();
+        }
+
+        return $this->json(['lessons' => $lessons, 'user' => $user], 200);
+    }
+
+    /**
      * @Route("/", name="lessonUser_post", methods="POST")
      * @param Request $request
      * @return Response
