@@ -67,6 +67,16 @@ services:
           arguments:
             - '@logger'
 
+    App\Controller\Client\UserController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@doctrine.orm.default_entity_manager'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
+
+
     fit.service.auth.code.processor:
       class: App\Service\Auth\CodeProcessor
       arguments:
