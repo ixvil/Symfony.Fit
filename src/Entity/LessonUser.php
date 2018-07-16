@@ -51,6 +51,12 @@ class LessonUser
      */
     private $user;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\LessonUserStatus")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $status;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -88,6 +94,18 @@ class LessonUser
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getStatus(): ?LessonUserStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?LessonUserStatus $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }

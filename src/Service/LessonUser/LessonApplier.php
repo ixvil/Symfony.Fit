@@ -11,6 +11,7 @@ namespace App\Service\LessonUser;
 
 use App\Entity\Lesson;
 use App\Entity\LessonUser;
+use App\Entity\LessonUserStatus;
 use App\Entity\User;
 use App\Entity\UserTicket;
 use Doctrine\Common\Collections\Criteria;
@@ -26,6 +27,7 @@ class LessonApplier
     private $entityManager;
     private $lessonUserRepository;
     private $userTicketRepository;
+    private $lessonUserStatusRepository;
 
 
     public function __construct(
@@ -35,6 +37,7 @@ class LessonApplier
         $this->entityManager = $entityManager;
         $this->lessonUserRepository = $entityManager->getRepository(LessonUser::class);
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
+        $this->lessonUserStatusRepository = $entityManager->getRepository(LessonUserStatus::class);
     }
 
     /**
@@ -115,6 +118,7 @@ class LessonApplier
             $lessonUser
                 ->setUser($user)
                 ->setLesson($lesson)
+                ->setStatus($this->lessonUserStatusRepository->find(1))
                 ->setUserTicket($userTicket);
             $userTicket->setLessonsExpires($userTicket->getLessonsExpires() - 1);
             $this->entityManager->persist($userTicket);
