@@ -9,6 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class LessonUserStatus
 {
+
+    const APPROVED = 2;
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()

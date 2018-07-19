@@ -16,6 +16,7 @@ use App\Entity\UserTicket;
 use App\Entity\UserType;
 use App\Service\Auth\Token\TokenGenerator;
 use App\Service\LessonUser\ApplyToLessonException;
+use App\Service\LessonUser\Checker;
 use App\Service\LessonUser\LessonApplier;
 use DateTime;
 use Doctrine\Common\Collections\Criteria;
@@ -46,17 +47,23 @@ class LessonUserController extends AbstractController
      * @var LessonApplier
      */
     private $lessonApplier;
+    /**
+     * @var Checker
+     */
+    private $checker;
 
     public function __construct(
         TokenGenerator $tokenGenerator,
         EntityManager $entityManager,
-        LessonApplier $lessonApplier
+        LessonApplier $lessonApplier,
+        Checker $checker
     )
     {
         parent::__construct($tokenGenerator);
         $this->lessonApplier = $lessonApplier;
         $this->entityManager = $entityManager;
         $this->lessonRepository = $entityManager->getRepository(Lesson::class);
+        $this->checker = $checker;
     }
 
     /**
@@ -95,6 +102,40 @@ class LessonUserController extends AbstractController
         }
 
         return $this->json(['lessons' => $lessons, 'user' => $user->clearCircularReferences()], 200);
+    }
+
+    /**
+     * @Route("/check", name="lessonUser_check", methods="POST")
+     * @param Request $request
+     * @return Response
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws \Doctrine\ORM\TransactionRequiredException
+     */
+    public function check(Request $request): Response
+    {
+        $this->auth($request);
+        $user = $this->getCurrentUser();
+        $content = json_decode($request->getContent());
+        $lessonId = $content->lessonId;
+        $clientId = $content->clientId;
+
+        if (!is_numeric($clientId)) {
+            return $this->json(['error' => 'Wrong client Id']);
+        }
+        $clientId = (int)$clientId;
+
+        if (!$this->checker->checkUserCanManage($user, $lessonId)) {
+            return $this->json(['error' => 'You can\'t manage this lesson']);
+        }
+
+        if (!$this->checker->markAsChecked($lessonId, (int)$clientId)) {
+            return $this->json(['error' => 'There is no lessonUser']);
+        }
+
+        $lesson = $this->entityManager->find(Lesson::class, $lessonId);
+
+        return $this->json(['lesson' => $lesson->clearCircularReferences(), 'user' => $user->clearCircularReferences()], 200);
     }
 
     /**

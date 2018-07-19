@@ -44,6 +44,7 @@ services:
         - '@fit.service.auth.token.generator'
         - '@doctrine.orm.default_entity_manager'
         - '@fit.service.lesson_applier'
+        - '@fit.service.lesson_checker'
       calls:
         - method: setLogger
           arguments:
@@ -97,6 +98,11 @@ services:
 
     fit.service.auth.token.generator:
       class: App\Service\Auth\Token\TokenGenerator
+
+    fit.service.lesson_checker:
+      class: App\Service\LessonUser\Checker
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
 
     fit.service.lesson_applier:
       class: App\Service\LessonUser\LessonApplier
