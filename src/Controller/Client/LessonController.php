@@ -46,12 +46,7 @@ class LessonController extends AbstractController
         //Fucking hack to avoid circular exception
         /** @var Lesson $lesson */
         foreach ($lessons as $lesson) {
-            $lessonUsers = $lesson->getLessonUsers();
-            /** @var LessonUser $lessonUser */
-            foreach ($lessonUsers as $lessonUser) {
-                $lessonUser->setLesson(null);
-                $lessonUser->getUser()->setUserTickets(null);
-            }
+            $lesson->clearCircularReferences();
         }
 
         return $this->json($lessons, 200);

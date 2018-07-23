@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -55,6 +57,20 @@ class UserTicket
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $isActive;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\LessonUser", mappedBy="userTicket")
+     */
+    private $lessonUsers;
+
+    public function __construct()
+    {
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -104,6 +120,33 @@ class UserTicket
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getIsActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): self
+    {
+        $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|LessonUser[]
+     */
+    public function getLessonUsers(): ?Collection
+    {
+        return $this->lessonUsers;
+    }
+
+    public function setLessonUsers(?Collection $lessonUsers): self
+    {
+        $this->lessonUsers = $lessonUsers;
 
         return $this;
     }

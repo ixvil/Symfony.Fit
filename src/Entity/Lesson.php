@@ -134,6 +134,8 @@ class Lesson
         foreach ($lessonUsers as $lessonUser) {
             $lessonUser->setLesson(null);
             $lessonUser->getUser()->setUserTickets(null);
+            $lessonUser->getUserTicket()->setLessonUsers(null);
+            $lessonUser->getUserTicket()->setUser(null);
         }
 
         return $this;

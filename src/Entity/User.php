@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 /**
@@ -122,6 +124,12 @@ class User
             /** @var UserTicket $userTicket */
             foreach ($this->userTickets as $userTicket) {
                 $userTicket->setUser(null);
+                $lessonUsers = $userTicket->getLessonUsers();
+                foreach ($lessonUsers as $lessonUser) {
+                    $lessonUser->setUserTicket(null);
+                    $lessonUser->setUser(null);
+                    $lessonUser->getLesson()->setLessonUsers(new ArrayCollection());
+                }
             }
         }
         return $this;
