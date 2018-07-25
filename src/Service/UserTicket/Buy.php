@@ -107,6 +107,7 @@ class Buy
         $userTicket->setDateCreatedAt(new \DateTime())
             ->setTicketPlan($ticketPlan)
             ->setLessonsExpires($ticketPlan->getLessonsCount())
+            ->setIsActive(true)
             ->setUser($paymentOrder->getUser());
 
         $newStatus = $this->paymentOrderStatusRepository->find(PaymentOrderStatusRepository::STATUS_PAID);
