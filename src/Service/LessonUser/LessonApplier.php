@@ -85,7 +85,12 @@ class LessonApplier
      */
     public function applyToLesson(Lesson $lesson, User $user): bool
     {
-        if (count($lesson->getLessonUsers()) >= $lesson->getLessonSet()->getUsersLimit()) {
+        $limit = $lesson->getLessonSet()->getUsersLimit();
+        if ($lesson->getOverriddenUsersLimit() !== null) {
+            $limit = $lesson->getOverriddenUsersLimit();
+        }
+
+        if (count($lesson->getLessonUsers()) >= $limit) {
             throw new ApplyToLessonException('Записи на это занятие больше нет');
         }
 

@@ -24,6 +24,13 @@ class Lesson
     private $id;
 
     /**
+     * @var int|null
+     *
+     * @ORM\Column(name="overridden_users_limit", type="integer", nullable=true)
+     */
+    private $overriddenUsersLimit;
+
+    /**
      * @var Hall
      * @MaxDepth(1)
      *
@@ -139,6 +146,26 @@ class Lesson
         }
 
         return $this;
+    }
+
+
+    /**
+     * @param int|null $overriddenUsersLimit
+     * @return Lesson
+     */
+    public function setOverriddenUsersLimit(int $overriddenUsersLimit = null): Lesson
+    {
+        $this->overriddenUsersLimit = $overriddenUsersLimit;
+        return $this;
+    }
+
+
+    /**
+     * @return int|null
+     */
+    public function getOverriddenUsersLimit(): ?int
+    {
+        return $this->overriddenUsersLimit;
     }
 
 }

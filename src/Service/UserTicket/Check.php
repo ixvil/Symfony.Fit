@@ -74,7 +74,7 @@ class Check
             $command = new GetOrderStatus();
             $command->setOrderNumber($paymentOrder->getId());
             $answer = $this->sberbankClient->execute($command);
-            $this->logger->info($paymentOrder->getId().':: '.print_r($answer));
+            $this->logger->info($paymentOrder->getId() . ':: ' . print_r($answer));
 
             if (isset($answer['orderStatus'])) {
                 $this->logger->info('Order status id ' . $answer['orderStatus']);
@@ -85,5 +85,22 @@ class Check
                 }
             }
         }
+    }
+
+    public function getOutdating()
+    {
+        $sql = "
+            select tic.*, ut2.date_created_at, ut2.lessons_expires, tp.lessons_count, u2.phone, u2.name, u2.id from (
+            select ut.id, min(l.start_date_time) first_lesson from user_ticket ut
+              left join lesson_user u on ut.id = u.user_ticket_id
+              left join lesson l on u.lesson_id = l.id
+            group by ut.id ) tic
+              left join user_ticket ut2 on ut2.id = tic.id
+              left join ticket_plan tp on tp.id = ut2.ticket_plan_id
+              left join user u2 on ut2.user_id = u2.id
+            where u2.id not in (30,31)
+            order by u2.id asc, date_created_at asc
+        ";
+
     }
 }

@@ -34,6 +34,11 @@ services:
             - '@logger'
 
     App\Controller\Client\LessonController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@fit.service.lesson_checker'
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.lesson.manager'
       calls:
         - method: setLogger
           arguments:
@@ -171,6 +176,11 @@ services:
       class: App\Service\Sms\Sender
       arguments:
         - '@fit.service.sms.api.smsc'
+
+    fit.service.lesson.manager:
+      class: App\Service\Lesson\LessonManager
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
 
     guzzle:
       class: GuzzleHttp\Client
