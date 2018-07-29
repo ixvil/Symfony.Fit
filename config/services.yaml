@@ -65,9 +65,19 @@ services:
             - '@logger'
 
     App\Controller\Client\TicketController:
+          arguments:
+            - '@fit.service.auth.token.generator'
+            - '@fit.service.user_ticket.buy'
+          calls:
+            - method: setLogger
+              arguments:
+                - '@logger'
+
+    App\Controller\Client\TicketPlanController:
       arguments:
         - '@fit.service.auth.token.generator'
-        - '@fit.service.user_ticket.buy'
+        - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.discount.discounter'
       calls:
         - method: setLogger
           arguments:
@@ -155,6 +165,7 @@ services:
       arguments:
         - '@doctrine.orm.default_entity_manager'
         - '@fit.service.sberbank.client'
+        - '@fit.service.discount.discounter'
       calls:
         - method: setLogger
           arguments:
@@ -179,6 +190,11 @@ services:
 
     fit.service.lesson.manager:
       class: App\Service\Lesson\LessonManager
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+
+    fit.service.discount.discounter:
+      class: App\Service\Discounts\Discounter
       arguments:
         - '@doctrine.orm.default_entity_manager'
 

@@ -59,6 +59,13 @@ class TicketPlan
      */
     private $type;
 
+
+    /**
+     * @var null|int
+     */
+    private $oldPrice = null;
+
+
     public function getId(): ?int
     {
         return $this->id;
@@ -122,6 +129,24 @@ class TicketPlan
         $this->type = $type;
 
         return $this;
+    }
+
+    /**
+     * @param int|null $oldPrice
+     * @return TicketPlan
+     */
+    public function setOldPrice(?int $oldPrice): TicketPlan
+    {
+        $this->oldPrice = $oldPrice;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getOldPrice(): ?int
+    {
+        return $this->oldPrice;
     }
 
 

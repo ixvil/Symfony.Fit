@@ -15,6 +15,7 @@ use App\Entity\TicketPlan;
 use App\Entity\User;
 use App\Entity\UserTicket;
 use App\Repository\PaymentOrderStatusRepository;
+use App\Service\Discounts\Discounter;
 use App\Service\Sberbank\Client;
 use App\Service\Sberbank\Commands\RegisterCommand;
 use Doctrine\ORM\EntityManager;
@@ -44,10 +45,15 @@ class Buy
      * @var PaymentOrderStatusRepository
      */
     private $paymentOrderStatusRepository;
+    /**
+     * @var Discounter
+     */
+    private $discounter;
 
     public function __construct(
         EntityManager $entityManager,
-        Client $sberbankClient
+        Client $sberbankClient,
+        Discounter $discounter
     )
     {
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
@@ -55,6 +61,7 @@ class Buy
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->entityManager = $entityManager;
         $this->sberbankClient = $sberbankClient;
+        $this->discounter = $discounter;
     }
 
     /**
@@ -69,6 +76,7 @@ class Buy
     {
         /** @var TicketPlan $ticketPlan */
         $ticketPlan = $this->ticketPlanRepository->find($ticketPlanId);
+        $this->discounter->makeDiscount($ticketPlan, $user);
 
         $paymentOrder = new PaymentOrder();
         $paymentOrder
@@ -82,7 +90,7 @@ class Buy
         $paymentOrder->setStatus($status);
 
         $this->entityManager->persist($paymentOrder);
-        $this->entityManager->flush();
+        $this->entityManager->flush($paymentOrder);
 
         $command = new RegisterCommand();
         $command->setAmount($paymentOrder->getAmount());
