@@ -97,7 +97,7 @@ class LessonController extends AbstractController
         $content = json_decode($request->getContent());
         $lessonId = $content->lessonId;
 
-        if (!$this->checker->checkUserCanManage($user, $lessonId)) {
+        if (!$this->checker->checkUserCanClose($user, $lessonId)) {
             return $this->json(['error' => 'You can\'t manage this lesson']);
         }
 

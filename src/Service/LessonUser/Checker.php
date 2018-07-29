@@ -87,4 +87,18 @@ class Checker
 
         return false;
     }
+
+    /**
+     * @param User $user
+     * @param int $lessonId
+     * @return bool
+     */
+    public function checkUserCanClose(User $user, int $lessonId): bool
+    {
+        if ($user->getType()->getId() === UserType::ADMIN) {
+            return true;
+        }
+
+        return false;
+    }
 }
