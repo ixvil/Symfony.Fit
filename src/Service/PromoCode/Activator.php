@@ -12,6 +12,7 @@ namespace App\Service\PromoCode;
 use App\Entity\PromoCode;
 use App\Entity\User;
 use App\Entity\UserTicket;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
@@ -63,6 +64,8 @@ class Activator
             ->setUser($user)
             ->setTicketPlan($promoCode->getTicketPlan())
             ->setLessonsExpires($promoCode->getTicketPlan()->getLessonsCount())
+            ->setIsActive(true)
+            ->setLessonUsers(new ArrayCollection())
             ->setDateCreatedAt(new \DateTime());
 
         $promoCode->setIsActivated(true);

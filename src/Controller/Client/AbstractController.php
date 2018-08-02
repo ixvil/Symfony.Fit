@@ -83,8 +83,8 @@ abstract class AbstractController extends Controller
 	$this->logger->info('cookies: '.print_r($_COOKIE, 1));
         $userId = $request->cookies->get(self::COOKIES_USER_ID);
         $frontToken = $request->cookies->get(self::COOKIES_AUTH_TOKEN);
+        $this->logger->info('userId:' . $userId . ' frontToken: ' . $frontToken.' userAgent: '.$_SERVER['HTTP_USER_AGENT']);
         if (!$userId || !$frontToken) {
-            $this->logger->info('userId:' . $userId . 'frontToken: ' . $frontToken);
             return;
         }
         $this->logger->info($userId, $request->cookies->all());
