@@ -31,6 +31,11 @@ class UserTicket
     private $dateCreatedAt;
 
     /**
+     * @var \DateTime
+     */
+    private $expirationDate;
+
+    /**
      * @var int|null
      *
      * @ORM\Column(name="lessons_expires", type="integer", nullable=true)
@@ -149,6 +154,40 @@ class UserTicket
         $this->lessonUsers = $lessonUsers;
 
         return $this;
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getExpirationDate(): \DateTime
+    {
+        $lessonUsers = $this->getLessonUsers();
+
+        $minDate = $this->getDateCreatedAt();
+        $outDating = 92;
+
+        $dDate = null;
+        if (is_iterable($lessonUsers)) {
+            foreach ($lessonUsers as $lessonUser) {
+
+                $curDate = $lessonUser->getLesson()->getStartDateTime();
+                if ($curDate < $minDate || $dDate === null) {
+
+                    $minDate = $curDate;
+                    $dDate = $minDate;
+                    $outDating = $this->getTicketPlan()->getDaysToOutdated();
+                }
+            }
+        }
+
+        $m = (int)($outDating / 31);
+        $d = $outDating % 31;
+
+        $expirationDate = clone $minDate;
+        $expirationDate->add(new \DateInterval("P{$m}M{$d}D"));
+
+
+        return new \DateTime($expirationDate->format('Y-m-d'));
     }
 
 

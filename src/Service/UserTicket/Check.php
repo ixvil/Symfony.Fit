@@ -11,6 +11,7 @@ namespace App\Service\UserTicket;
 
 use App\Entity\PaymentOrder;
 use App\Entity\PaymentOrderStatus;
+use App\Entity\UserTicket;
 use App\Repository\PaymentOrderRepository;
 use App\Repository\PaymentOrderStatusRepository;
 use App\Service\Sberbank\Client;
@@ -48,6 +49,9 @@ class Check
      */
     private $buy;
 
+    private $userTicketRepository;
+    private $entityManager;
+
     public function __construct(
         EntityManager $entityManager,
         Client $sberbankClient,
@@ -56,6 +60,8 @@ class Check
     {
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->paymentOrderRepository = $entityManager->getRepository(PaymentOrder::class);
+        $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
+        $this->entityManager = $entityManager;
         $this->sberbankClient = $sberbankClient;
         $this->buy = $buy;
     }
@@ -74,22 +80,46 @@ class Check
             $command = new GetOrderStatus();
             $command->setOrderNumber($paymentOrder->getId());
             $answer = $this->sberbankClient->execute($command);
-            $this->logger->info($paymentOrder->getId() . ':: ' . print_r($answer));
+            $this->logger->info($paymentOrder->getId().':: '.print_r($answer));
 
             if (isset($answer['orderStatus'])) {
-                $this->logger->info('Order status id ' . $answer['orderStatus']);
+                $this->logger->info('Order status id '.$answer['orderStatus']);
                 if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
                     $this->buy->confirmOrder($paymentOrder);
-                } else if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
-                    $this->buy->cancelOrder($paymentOrder);
+                } else {
+                    if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
+                        $this->buy->cancelOrder($paymentOrder);
+                    }
                 }
+            }
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function checkExpiration()
+    {
+        $userTickets = $this->userTicketRepository->matching(
+            Criteria::create()
+                ->andWhere(Criteria::expr()->eq('isActive', true))
+        );
+
+        /** @var UserTicket $userTicket */
+        foreach ($userTickets as $userTicket) {
+            if ($userTicket->getExpirationDate() < new \DateTime()) {
+                $userTicket->setIsActive(false);
+                $this->entityManager->persist($userTicket);
+                $this->entityManager->flush($userTicket);
+                $this->logger->info('User ticket #'.$userTicket->getId().' expired');
             }
         }
     }
 
     public function getOutdating()
     {
-        $sql = "
+        $sql
+            = "
             select tic.*, ut2.date_created_at, ut2.lessons_expires, tp.lessons_count, u2.phone, u2.name, u2.id from (
             select ut.id, min(l.start_date_time) first_lesson from user_ticket ut
               left join lesson_user u on ut.id = u.user_ticket_id

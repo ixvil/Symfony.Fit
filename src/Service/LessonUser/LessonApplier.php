@@ -12,6 +12,7 @@ namespace App\Service\LessonUser;
 use App\Entity\Lesson;
 use App\Entity\LessonUser;
 use App\Entity\LessonUserStatus;
+use App\Entity\TicketPlan;
 use App\Entity\User;
 use App\Entity\UserTicket;
 use Doctrine\Common\Collections\Criteria;
@@ -28,6 +29,7 @@ class LessonApplier
     private $lessonUserRepository;
     private $userTicketRepository;
     private $lessonUserStatusRepository;
+    private $ticketPlanRepository;
 
 
     public function __construct(
@@ -38,11 +40,13 @@ class LessonApplier
         $this->lessonUserRepository = $entityManager->getRepository(LessonUser::class);
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
         $this->lessonUserStatusRepository = $entityManager->getRepository(LessonUserStatus::class);
+        $this->ticketPlanRepository = $entityManager->getRepository(TicketPlan::class);
     }
 
     /**
      * @param Lesson $lesson
-     * @param User $user
+     * @param User   $user
+     *
      * @return bool
      * @throws \Doctrine\ORM\ORMException
      * @throws \Exception
@@ -77,7 +81,8 @@ class LessonApplier
 
     /**
      * @param Lesson $lesson
-     * @param User $user
+     * @param User   $user
+     *
      * @return bool
      * @throws ApplyToLessonException
      * @throws \Doctrine\ORM\ORMException
@@ -103,19 +108,33 @@ class LessonApplier
             Criteria::create()
                 ->andWhere(Criteria::expr()->gte('lessonsExpires', 1))
                 ->andWhere(Criteria::expr()->eq('user', $user))
-//                ->orderBy(['dateCreatedAt', 'ASC'])
-                ->setMaxResults(1)
+                ->andWhere(Criteria::expr()->eq('isActive', true))
+                ->andWhere(
+                    Criteria::expr()->in(
+                        'ticketPlan',
+                        $this->ticketPlanRepository->matching(
+                            Criteria::create()->andWhere(Criteria::expr()->in('type', [1, 2]))
+                        )->toArray()
+                    )
+                )
         );
 
-        $this->logger->info('userId: ' . $user->getId() . ' tickets:' . $userTicketCollection->count());
+        $this->logger->info('userId: '.$user->getId().' tickets:'.$userTicketCollection->count());
         if ($userTicketCollection->count() < 1) {
             throw new ApplyToLessonException('У вас недостаточно свободных занятий');
         }
 
-        /** @var UserTicket $userTicket */
-        $userTicket = $userTicketCollection->current();
-        if ($userTicket->getLessonsExpires() < 1) {
-            throw new ApplyToLessonException('У вас недостаточно свободных занятий');
+        $goodTicket = null;
+        /** @var UserTicket|null $userTicket */
+        foreach ($userTicketCollection as $userTicket) {
+            if ($userTicket->getExpirationDate() > $lesson->getStartDateTime()) {
+                $goodTicket = $userTicket;
+                break;
+            }
+        }
+
+        if (!$goodTicket) {
+            throw new ApplyToLessonException('На момент начала этого занятия вам абонемент будет уже недействителен');
         }
 
         if ($lessonUserCollection->count() == 0) {

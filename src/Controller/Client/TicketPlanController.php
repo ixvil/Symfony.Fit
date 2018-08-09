@@ -66,6 +66,7 @@ class TicketPlanController extends AbstractController
         $ticketPlans = $this->ticketPlanRepository->matching(
             Criteria::create()
                 ->andWhere(Criteria::expr()->eq('type', $this->entityManager->find(TicketPlanType::class, 1)))
+                ->orWhere(Criteria::expr()->eq('type', $this->entityManager->find(TicketPlanType::class, 3)))
         );
 
         foreach ($ticketPlans as &$ticketPlan) {
