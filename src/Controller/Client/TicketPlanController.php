@@ -41,8 +41,7 @@ class TicketPlanController extends AbstractController
         TokenGenerator $tokenGenerator,
         EntityManager $entityManager,
         Discounter $discounter
-    )
-    {
+    ) {
         parent::__construct($tokenGenerator);
         $this->entityManager = $entityManager;
         $this->ticketPlanRepository = $this->entityManager->getRepository(TicketPlan::class);
@@ -53,6 +52,7 @@ class TicketPlanController extends AbstractController
     /**
      * @Route("/", name="ticketPlan_index", methods={"POST"})
      * @param Request $request
+     *
      * @return Response
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
@@ -62,6 +62,10 @@ class TicketPlanController extends AbstractController
     {
         $this->auth($request);
         $user = $this->getCurrentUser();
+        $content = json_decode($request->getContent());
+
+        $useBonus = $content->useBonus;
+
         /** @var TicketPlan[] $ticketPlans */
         $ticketPlans = $this->ticketPlanRepository->matching(
             Criteria::create()
@@ -71,6 +75,9 @@ class TicketPlanController extends AbstractController
 
         foreach ($ticketPlans as &$ticketPlan) {
             $this->discounter->makeDiscount($ticketPlan, $user);
+            if ($useBonus == true) {
+                $this->discounter->useBonus($ticketPlan, $user);
+            }
         }
 
         return $this->json(['ticketPlans' => $ticketPlans]);

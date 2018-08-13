@@ -166,6 +166,7 @@ services:
         - '@doctrine.orm.default_entity_manager'
         - '@fit.service.sberbank.client'
         - '@fit.service.discount.discounter'
+        - '@fit.service.sms.sender'
       calls:
         - method: setLogger
           arguments:
@@ -178,6 +179,7 @@ services:
         - '@doctrine.orm.default_entity_manager'
         - '@fit.service.sberbank.client'
         - '@fit.service.user_ticket.buy'
+        - '@fit.service.sms.sender'
       calls:
         - method: setLogger
           arguments:

@@ -16,6 +16,7 @@ use App\Repository\PaymentOrderRepository;
 use App\Repository\PaymentOrderStatusRepository;
 use App\Service\Sberbank\Client;
 use App\Service\Sberbank\Commands\GetOrderStatus;
+use App\Service\Sms\Sender;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
 use Psr\Log\LoggerAwareTrait;
@@ -23,15 +24,16 @@ use Psr\Log\LoggerAwareTrait;
 class Check
 {
     use LoggerAwareTrait;
-    private $statuses = [
-        0 => PaymentOrderStatusRepository::STATUS_NEW,
-        1 => PaymentOrderStatusRepository::STATUS_PAID,
-        2 => PaymentOrderStatusRepository::STATUS_PAID,
-        3 => PaymentOrderStatusRepository::STATUS_CANCELED,
-        4 => PaymentOrderStatusRepository::STATUS_CANCELED,
-        5 => PaymentOrderStatusRepository::STATUS_NEW,
-        6 => PaymentOrderStatusRepository::STATUS_CANCELED
-    ];
+    private $statuses
+        = [
+            0 => PaymentOrderStatusRepository::STATUS_NEW,
+            1 => PaymentOrderStatusRepository::STATUS_PAID,
+            2 => PaymentOrderStatusRepository::STATUS_PAID,
+            3 => PaymentOrderStatusRepository::STATUS_CANCELED,
+            4 => PaymentOrderStatusRepository::STATUS_CANCELED,
+            5 => PaymentOrderStatusRepository::STATUS_NEW,
+            6 => PaymentOrderStatusRepository::STATUS_CANCELED,
+        ];
     /**
      * @var PaymentOrderStatusRepository
      */
@@ -51,21 +53,30 @@ class Check
 
     private $userTicketRepository;
     private $entityManager;
+    /**
+     * @var Sender
+     */
+    private $sender;
 
     public function __construct(
         EntityManager $entityManager,
         Client $sberbankClient,
-        Buy $buy
-    )
-    {
+        Buy $buy,
+        Sender $sender
+    ) {
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->paymentOrderRepository = $entityManager->getRepository(PaymentOrder::class);
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
         $this->entityManager = $entityManager;
         $this->sberbankClient = $sberbankClient;
         $this->buy = $buy;
+        $this->sender = $sender;
     }
 
+    /**
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function check()
     {
         $newStatus = $this->paymentOrderStatusRepository->find(PaymentOrderStatusRepository::STATUS_NEW);
@@ -86,6 +97,7 @@ class Check
                 $this->logger->info('Order status id '.$answer['orderStatus']);
                 if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
                     $this->buy->confirmOrder($paymentOrder);
+//                    $this->sender->sendToAdmin('Hooray! New payment =) '.$paymentOrder->getAmount());
                 } else {
                     if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
                         $this->buy->cancelOrder($paymentOrder);
@@ -109,11 +121,30 @@ class Check
         foreach ($userTickets as $userTicket) {
             if ($userTicket->getExpirationDate() < new \DateTime()) {
                 $userTicket->setIsActive(false);
+                $ticketPlan = $userTicket->getTicketPlan();
+                $bonusesAmount = $this->calculateBonusesAmount(
+                    $ticketPlan->getPrice(),
+                    $userTicket->getLessonsExpires(),
+                    $ticketPlan->getLessonsCount()
+                );
+
+                $user = $userTicket->getUser();
+                $user->setBonusBalance($user->getBonusBalance() + $bonusesAmount);
+
                 $this->entityManager->persist($userTicket);
                 $this->entityManager->flush($userTicket);
-                $this->logger->info('User ticket #'.$userTicket->getId().' expired');
+
+                $this->entityManager->persist($user);
+                $this->entityManager->flush($user);
+
+                $this->logger->info('User ticket #'.$userTicket->getId().' expired. '.$bonusesAmount.' bonuses added');
             }
         }
+    }
+
+    public function calculateBonusesAmount(int $price, int $lessonsExpires, int $lessonsCount): int
+    {
+        return ($price * $lessonsExpires / $lessonsCount) / 2;
     }
 
     public function getOutdating()

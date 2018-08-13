@@ -56,6 +56,12 @@ class User
      */
     private $type;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $bonusBalance;
+    
+
     public function getId(): ?int
     {
         return $this->id;
@@ -132,6 +138,18 @@ class User
                 }
             }
         }
+        return $this;
+    }
+
+    public function getBonusBalance(): ?int
+    {
+        return $this->bonusBalance;
+    }
+
+    public function setBonusBalance(?int $bonusBalance): self
+    {
+        $this->bonusBalance = $bonusBalance;
+
         return $this;
     }
 

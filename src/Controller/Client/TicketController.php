@@ -46,8 +46,10 @@ class TicketController extends AbstractController
         $content = json_decode($request->getContent());
 
         $ticketPlanId = $content->ticket_plan_id;
+        $useBonus = $content->useBonus;
+
         if ($ticketPlanId) {
-            $data = $this->buy->registerOrder($ticketPlanId, $this->getCurrentUser());
+            $data = $this->buy->registerOrder($ticketPlanId, $this->getCurrentUser(), $useBonus);
         } else {
             return $this->json(['error' => 'No such ticketPlan']);
         }

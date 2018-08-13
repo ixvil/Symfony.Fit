@@ -89,6 +89,7 @@ class AuthorizeController extends AbstractController
             $user
                 ->setPhone($phoneNumber)
                 ->setName('')
+                ->setBonusBalance(0)
                 ->setType($this->entityManager->find(UserType::class, 3));
             $this->entityManager->persist($user);
 
@@ -125,6 +126,7 @@ class AuthorizeController extends AbstractController
             $user
                 ->setPhone($phoneNumber)
                 ->setName('')
+                ->setBonusBalance(0)
                 ->setType($this->entityManager->find(UserType::class, 3));
             $this->entityManager->persist($user);
         } else {

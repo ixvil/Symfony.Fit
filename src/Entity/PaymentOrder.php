@@ -54,6 +54,11 @@ class PaymentOrder
      */
     private $userTicket;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $bonusAmount = 0;
+
     public function getId()
     {
         return $this->id;
@@ -139,6 +144,18 @@ class PaymentOrder
     public function setUserTicket(?UserTicket $userTicket): self
     {
         $this->userTicket = $userTicket;
+
+        return $this;
+    }
+
+    public function getBonusAmount(): ?int
+    {
+        return $this->bonusAmount;
+    }
+
+    public function setBonusAmount(?int $bonusAmount): self
+    {
+        $this->bonusAmount = $bonusAmount;
 
         return $this;
     }

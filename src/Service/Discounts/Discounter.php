@@ -22,14 +22,14 @@ class Discounter
 
     public function __construct(
         EntityManager $entityManager
-    )
-    {
+    ) {
         $this->discountRepository = $entityManager->getRepository(Discount::class);
     }
 
     /**
      * @param TicketPlan $ticketPlan
-     * @param User $user
+     * @param User       $user
+     *
      * @return TicketPlan
      */
     public function makeDiscount(TicketPlan $ticketPlan, User $user): TicketPlan
@@ -50,5 +50,17 @@ class Discounter
         }
 
         return $ticketPlan;
+    }
+
+    public function useBonus(TicketPlan $ticketPlan, User $user): int
+    {
+        $bonusBalance = $user->getBonusBalance();
+        if ($bonusBalance > $ticketPlan->getPrice()) {
+            $bonusBalance = $ticketPlan->getPrice();
+        }
+
+        $ticketPlan->setPrice($ticketPlan->getPrice() - $bonusBalance);
+
+        return $bonusBalance;
     }
 }

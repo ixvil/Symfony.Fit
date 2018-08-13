@@ -8,7 +8,6 @@
 
 namespace App\Service\UserTicket;
 
-
 use App\Entity\PaymentOrder;
 use App\Entity\PaymentOrderStatus;
 use App\Entity\TicketPlan;
@@ -18,6 +17,7 @@ use App\Repository\PaymentOrderStatusRepository;
 use App\Service\Discounts\Discounter;
 use App\Service\Sberbank\Client;
 use App\Service\Sberbank\Commands\RegisterCommand;
+use App\Service\Sms\Sender;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Psr\Log\LoggerAwareTrait;
@@ -49,38 +49,51 @@ class Buy
      * @var Discounter
      */
     private $discounter;
+    /**
+     * @var Sender
+     */
+    private $sender;
 
     public function __construct(
         EntityManager $entityManager,
         Client $sberbankClient,
-        Discounter $discounter
-    )
-    {
+        Discounter $discounter,
+        Sender $sender
+    ) {
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
         $this->ticketPlanRepository = $entityManager->getRepository(TicketPlan::class);
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->entityManager = $entityManager;
         $this->sberbankClient = $sberbankClient;
         $this->discounter = $discounter;
+        $this->sender = $sender;
     }
 
     /**
-     * @param int $ticketPlanId
+     * @param int  $ticketPlanId
      * @param User $user
+     * @param bool $useBonus
+     *
      * @return array
      *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function registerOrder(int $ticketPlanId, User $user): array
+    public function registerOrder(int $ticketPlanId, User $user, bool $useBonus): array
     {
         /** @var TicketPlan $ticketPlan */
         $ticketPlan = $this->ticketPlanRepository->find($ticketPlanId);
         $this->discounter->makeDiscount($ticketPlan, $user);
+        if ($useBonus) {
+            $bonusAmount = $this->discounter->useBonus($ticketPlan, $user);
+        } else {
+            $bonusAmount = 0;
+        }
 
         $paymentOrder = new PaymentOrder();
         $paymentOrder
             ->setAmount($ticketPlan->getPrice())
+            ->setBonusAmount($bonusAmount)
             ->setUser($user)
             ->setTicketPlan($ticketPlan)
             ->setCreatedAt(new \DateTime())
@@ -92,23 +105,28 @@ class Buy
         $this->entityManager->persist($paymentOrder);
         $this->entityManager->flush($paymentOrder);
 
-        $command = new RegisterCommand();
-        $command->setAmount($paymentOrder->getAmount());
-        $command->setOrderNumber($paymentOrder->getId());
-
-        $answer = $this->sberbankClient->execute($command);
+        if ($paymentOrder->getAmount() > 0) {
+            $answer = $this->registerCommand($paymentOrder);
+        } else {
+            $this->confirmOrder($paymentOrder);
+            $answer = [
+                'status'  => 'ok',
+                'formUrl' => '/',
+            ];
+        }
 
         return $answer;
     }
 
     /**
      * @param PaymentOrder $paymentOrder
+     *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function confirmOrder(PaymentOrder $paymentOrder)
     {
-        $this->logger->info('will confirm PaymentOrder #' . $paymentOrder->getId());
+        $this->logger->info('will confirm PaymentOrder #'.$paymentOrder->getId());
         $ticketPlan = $paymentOrder->getTicketPlan();
 
         $userTicket = new UserTicket();
@@ -124,25 +142,26 @@ class Buy
             ->setStatus($newStatus)
             ->setUpdatedAt(new \DateTime());
 
-        $this->entityManager->persist($paymentOrder);
         $this->entityManager->persist($userTicket);
-        $this->entityManager->flush();
+        $this->entityManager->flush($userTicket);
 
         $paymentOrder->setUserTicket($userTicket);
+
         $this->entityManager->persist($paymentOrder);
-        $this->entityManager->flush();
+        $this->entityManager->flush($paymentOrder);
 
-
+        $this->updateBonusBalance($paymentOrder);
     }
 
     /**
      * @param PaymentOrder $paymentOrder
+     *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function cancelOrder(PaymentOrder $paymentOrder)
     {
-        $this->logger->info('will cancel PaymentOrder #' . $paymentOrder->getId());
+        $this->logger->info('will cancel PaymentOrder #'.$paymentOrder->getId());
         $newStatus = $this->paymentOrderStatusRepository->find(PaymentOrderStatusRepository::STATUS_CANCELED);
 
         $paymentOrder
@@ -151,6 +170,50 @@ class Buy
 
         $this->entityManager->persist($paymentOrder);
         $this->entityManager->flush();
+    }
+
+    public function registerCommand(PaymentOrder $paymentOrder): array
+    {
+        $command = new RegisterCommand();
+        $command->setAmount($paymentOrder->getAmount());
+        $command->setOrderNumber($paymentOrder->getId());
+
+        $answer = $this->sberbankClient->execute($command);
+
+        return $answer;
+    }
+
+    /**
+     * @param PaymentOrder $paymentOrder
+     *
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function updateBonusBalance(PaymentOrder $paymentOrder): void
+    {
+        if ($paymentOrder->getBonusAmount() > 0) {
+            $user = $paymentOrder->getUser();
+            $bonusBalance = $user->getBonusBalance();
+            $newBonusBalance = $bonusBalance - $paymentOrder->getBonusAmount();
+            $user->setBonusBalance($newBonusBalance);
+            $this->entityManager->persist($user);
+            $this->entityManager->flush($user);
+
+            if ($newBonusBalance < 0) {
+                $this->sender->sendToAdmin('Alert! negative balance user '.$user->getPhone());
+                $this->logger->alert(
+                    "User bonus balance is negative: ",
+                    [
+                        'phone'                     => $user->getPhone(),
+                        'bonusBalance'              => $bonusBalance,
+                        'newBonusBalance'           => $newBonusBalance,
+                        'paymentOrder->id'          => $paymentOrder->getId(),
+                        'paymentOrder->bonusAmount' => $paymentOrder->getBonusAmount(),
+                        'paymentOrder->amount'      => $paymentOrder->getAmount(),
+                    ]
+                );
+            }
+        }
     }
 
 }
