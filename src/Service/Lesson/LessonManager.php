@@ -62,7 +62,7 @@ class LessonManager
             Criteria::create()
                 ->andWhere(Criteria::expr()->isNull('overriddenUsersLimit'))
                 ->orWhere(Criteria::expr()->neq('overriddenUsersLimit', 0))
-                ->andWhere(Criteria::expr()->lte('startDateTime', new \DateTime("-1 hour")))
+                ->andWhere(Criteria::expr()->lte('startDateTime', new \DateTime("+1 hour")))
                 ->andWhere(Criteria::expr()->gte('startDateTime', new \DateTime("today")))
         );
 
