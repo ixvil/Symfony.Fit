@@ -191,9 +191,11 @@ services:
         - '@fit.service.sms.api.smsc'
 
     fit.service.lesson.manager:
+      public: true
       class: App\Service\Lesson\LessonManager
       arguments:
         - '@doctrine.orm.default_entity_manager'
+        - '@logger'
 
     fit.service.discount.discounter:
       class: App\Service\Discounts\Discounter
