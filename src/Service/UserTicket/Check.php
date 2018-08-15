@@ -97,7 +97,7 @@ class Check
                 $this->logger->info('Order status id '.$answer['orderStatus']);
                 if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
                     $this->buy->confirmOrder($paymentOrder);
-//                    $this->sender->sendToAdmin('Hooray! New payment =) '.$paymentOrder->getAmount());
+                    $this->sender->sendToOwner('Hooray! New payment =) '.$paymentOrder->getAmount());
                 } else {
                     if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
                         $this->buy->cancelOrder($paymentOrder);
