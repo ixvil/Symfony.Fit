@@ -11,6 +11,8 @@ namespace App\Controller\Client;
 
 use App\Entity\Lesson;
 use App\Entity\LessonUser;
+use App\Entity\User;
+use App\Entity\UserType;
 use App\Service\Auth\Token\TokenGenerator;
 use App\Service\Lesson\LessonManager;
 use App\Service\Lesson\Manager;
@@ -24,6 +26,7 @@ use Psr\Log\LoggerTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Serializer;
 
@@ -50,8 +53,7 @@ class LessonController extends AbstractController
         Checker $checker,
         EntityManager $entityManager,
         LessonManager $lessonManager
-    )
-    {
+    ) {
         $this->checker = $checker;
         $this->entityManager = $entityManager;
         $this->lessonManager = $lessonManager;
@@ -61,6 +63,7 @@ class LessonController extends AbstractController
     /**
      * @Route("/", name="lesson_index", methods={"GET"})
      * @param Request $request
+     *
      * @return Response
      */
     public function index(Request $request): Response
@@ -74,9 +77,16 @@ class LessonController extends AbstractController
                 ->orderBy(['startDateTime' => 'ASC'])
         );
 
+        try {
+            $this->auth($request);
+            $user = $this->getCurrentUser();
+        } catch (UnprocessableEntityHttpException $e) {
+            $user = new User();
+        }
+
         /** @var Lesson $lesson */
         foreach ($lessons as $lesson) {
-            $lesson->clearCircularReferences();
+            $lesson->clearCircularReferences($user->getType() == null || $user->getType()->getId() == UserType::GUEST);
         }
 
         return $this->json($lessons, 200);
@@ -85,6 +95,7 @@ class LessonController extends AbstractController
     /**
      * @Route("/close", name="lessonClose_post", methods="POST")
      * @param Request $request
+     *
      * @return Response
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
@@ -105,6 +116,7 @@ class LessonController extends AbstractController
         $lesson = $this->entityManager->find(Lesson::class, $lessonId);
 
         $this->lessonManager->closeLesson($lesson);
+
         return $this->json(['lesson' => $lesson->clearCircularReferences()]);
 
     }

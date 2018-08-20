@@ -34,19 +34,25 @@ class Discounter
      */
     public function makeDiscount(TicketPlan $ticketPlan, User $user): TicketPlan
     {
+
         $discounts = $this->discountRepository->matching(
             Criteria::create()
                 ->andWhere(Criteria::expr()->eq('user', $user))
+                ->orWhere(Criteria::expr()->isNull('user'))
                 ->andWhere(Criteria::expr()->eq('ticketPlan', $ticketPlan))
                 ->andWhere(Criteria::expr()->lte('activeFrom', new \DateTime()))
                 ->andWhere(Criteria::expr()->gte('activeTo', new \DateTime()))
+
         );
 
         if ($discounts->count() > 0) {
-            /** @var Discount $discount */
-            $discount = $discounts->current();
-            $ticketPlan->setOldPrice($ticketPlan->getPrice());
-            $ticketPlan->setPrice($ticketPlan->getPrice() - $discount->getValue());
+            $originPrice = $ticketPlan->getPrice();
+            foreach ($discounts as $discount) {
+                /** @var Discount $discount */
+                $ticketPlan->setOldPrice($originPrice);
+                $ticketPlan->setPrice($ticketPlan->getPrice() - $discount->getValue());
+            }
+
         }
 
         return $ticketPlan;

@@ -13,6 +13,9 @@ use Doctrine\ORM\Mapping as ORM;
 class UserType
 {
     const ADMIN = 1;
+    const TRAINER = 2;
+    const GUEST = 3;
+
     /**
      * @var int
      *

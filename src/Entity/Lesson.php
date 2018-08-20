@@ -97,11 +97,13 @@ class Lesson
 
     /**
      * @param \DateTime $startDateTime
+     *
      * @return Lesson
      */
     public function setStartDateTime(\DateTime $startDateTime): Lesson
     {
         $this->startDateTime = $startDateTime;
+
         return $this;
     }
 
@@ -115,11 +117,13 @@ class Lesson
 
     /**
      * @param Collection $lessonUsers
+     *
      * @return Lesson
      */
     public function setLessonUsers(Collection $lessonUsers): Lesson
     {
         $this->lessonUsers = $lessonUsers;
+
         return $this;
     }
 
@@ -132,9 +136,11 @@ class Lesson
     }
 
     /**
+     * @param bool $isGuest
+     *
      * @return $this
      */
-    public function clearCircularReferences()
+    public function clearCircularReferences($isGuest = true): Lesson
     {
         $lessonUsers = $this->getLessonUsers();
         /** @var LessonUser $lessonUser */
@@ -143,6 +149,12 @@ class Lesson
             $lessonUser->getUser()->setUserTickets(null);
             $lessonUser->getUserTicket()->setLessonUsers(null);
             $lessonUser->getUserTicket()->setUser(null);
+            if ($isGuest) {
+                $lessonUser->getUser()->setName('-');
+                $lessonUser->getUser()->setPhone(md5($lessonUser->getUser()->getPhone()));
+                $lessonUser->getUser()->setBonusBalance(0);
+
+            }
         }
 
         return $this;
@@ -151,11 +163,13 @@ class Lesson
 
     /**
      * @param int|null $overriddenUsersLimit
+     *
      * @return Lesson
      */
     public function setOverriddenUsersLimit(int $overriddenUsersLimit = null): Lesson
     {
         $this->overriddenUsersLimit = $overriddenUsersLimit;
+
         return $this;
     }
 
