@@ -121,23 +121,18 @@ class Check
         foreach ($userTickets as $userTicket) {
             if ($userTicket->getExpirationDate() < new \DateTime()) {
                 $userTicket->setIsActive(false);
-                $ticketPlan = $userTicket->getTicketPlan();
-                $bonusesAmount = $this->calculateBonusesAmount(
-                    $ticketPlan->getPrice(),
-                    $userTicket->getLessonsExpires(),
-                    $ticketPlan->getLessonsCount()
-                );
-
-                $user = $userTicket->getUser();
-                $user->setBonusBalance($user->getBonusBalance() + $bonusesAmount);
-
                 $this->entityManager->persist($userTicket);
                 $this->entityManager->flush($userTicket);
 
-                $this->entityManager->persist($user);
-                $this->entityManager->flush($user);
+                if ($userTicket->getTicketPlan()->getType()->getId() === 1) {
+                    $bonusesAmount = $this->chargeBack($userTicket);
 
-                $this->logger->info('User ticket #'.$userTicket->getId().' expired. '.$bonusesAmount.' bonuses added');
+                    $this->logger->info(
+                        'User ticket #'.$userTicket->getId().' expired. '.$bonusesAmount.' bonuses added'
+                    );
+                } else {
+                    $this->logger->info('User ticket #'.$userTicket->getId().' expired. no bonuses added');
+                }
             }
         }
     }
@@ -147,21 +142,30 @@ class Check
         return ($price * $lessonsExpires / $lessonsCount) / 2;
     }
 
-    public function getOutdating()
+    /**
+     * @param $userTicket
+     *
+     * @return int
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function chargeBack(UserTicket $userTicket): int
     {
-        $sql
-            = "
-            select tic.*, ut2.date_created_at, ut2.lessons_expires, tp.lessons_count, u2.phone, u2.name, u2.id from (
-            select ut.id, min(l.start_date_time) first_lesson from user_ticket ut
-              left join lesson_user u on ut.id = u.user_ticket_id
-              left join lesson l on u.lesson_id = l.id
-            group by ut.id ) tic
-              left join user_ticket ut2 on ut2.id = tic.id
-              left join ticket_plan tp on tp.id = ut2.ticket_plan_id
-              left join user u2 on ut2.user_id = u2.id
-            where u2.id not in (30,31)
-            order by u2.id asc, date_created_at asc
-        ";
 
+        $ticketPlan = $userTicket->getTicketPlan();
+
+        $bonusesAmount = $this->calculateBonusesAmount(
+            $ticketPlan->getPrice(),
+            $userTicket->getLessonsExpires(),
+            $ticketPlan->getLessonsCount()
+        );
+
+        $user = $userTicket->getUser();
+        $user->setBonusBalance($user->getBonusBalance() + $bonusesAmount);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush($user);
+
+        return $bonusesAmount;
     }
 }

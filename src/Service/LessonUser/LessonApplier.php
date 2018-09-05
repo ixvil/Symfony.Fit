@@ -113,7 +113,7 @@ class LessonApplier
                     Criteria::expr()->in(
                         'ticketPlan',
                         $this->ticketPlanRepository->matching(
-                            Criteria::create()->andWhere(Criteria::expr()->in('type', [1, 2]))
+                            Criteria::create()->andWhere(Criteria::expr()->in('type', [1, 2, 4]))
                         )->toArray()
                     )
                 )

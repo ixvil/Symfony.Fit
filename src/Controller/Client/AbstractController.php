@@ -57,7 +57,7 @@ abstract class AbstractController extends Controller
         $this->userRepo = $this->getDoctrine()->getRepository(User::class);
         $user = $this->userRepo->find($userId);
         if (!$user instanceof User) {
-            throw new UnprocessableEntityHttpException();
+            throw new AccessDeniedHttpException();
         }
 
         $userTokenRepository = $this->getDoctrine()->getRepository(UserToken::class);

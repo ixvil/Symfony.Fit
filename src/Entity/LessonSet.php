@@ -57,6 +57,16 @@ class LessonSet
      */
     private $trainerUser;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $photo;
+
+    /**
+     * @ORM\Column(type="string", length=1024, nullable=true)
+     */
+    private $description;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -100,11 +110,13 @@ class LessonSet
 
     /**
      * @param int $usersLimit
+     *
      * @return LessonSet
      */
     public function setUsersLimit(int $usersLimit): LessonSet
     {
         $this->usersLimit = $usersLimit;
+
         return $this;
     }
 
@@ -114,6 +126,30 @@ class LessonSet
     public function getUsersLimit(): int
     {
         return $this->usersLimit;
+    }
+
+    public function getPhoto(): ?string
+    {
+        return $this->photo;
+    }
+
+    public function setPhoto(?string $photo): self
+    {
+        $this->photo = $photo;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
     }
 
 

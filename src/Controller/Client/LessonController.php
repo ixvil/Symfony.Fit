@@ -26,6 +26,7 @@ use Psr\Log\LoggerTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Serializer;
@@ -80,7 +81,7 @@ class LessonController extends AbstractController
         try {
             $this->auth($request);
             $user = $this->getCurrentUser();
-        } catch (UnprocessableEntityHttpException $e) {
+        } catch (AccessDeniedHttpException $e) {
             $user = new User();
         }
 
