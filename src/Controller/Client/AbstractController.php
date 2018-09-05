@@ -97,7 +97,7 @@ abstract class AbstractController extends Controller
     protected function getCurrentUser(): User
     {
         if (!$this->user instanceof User) {
-            throw new UnprocessableEntityHttpException();
+            throw new AccessDeniedHttpException();
         }
 
         return $this->user;
