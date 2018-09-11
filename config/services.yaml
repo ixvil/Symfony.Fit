@@ -172,6 +172,12 @@ services:
           arguments:
             - '@logger'
 
+    fit.service.user_ticket.get_list:
+      public: true
+      class: App\Service\UserTicket\GetList
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
+
     fit.service.user_ticket.check:
       public: true
       class: App\Service\UserTicket\Check
