@@ -92,6 +92,14 @@ services:
           arguments:
             - '@logger'
 
+    App\Controller\Client\UserTicketController:
+      arguments:
+        - '@fit.service.auth.token.generator'
+        - '@fit.service.user_ticket.get_list'
+      calls:
+        - method: setLogger
+          arguments:
+            - '@logger'
 
     fit.service.auth.code.processor:
       class: App\Service\Auth\CodeProcessor
@@ -172,11 +180,16 @@ services:
           arguments:
             - '@logger'
 
+    fit.service.user_ticket.processor:
+      public: true
+      class: App\Service\UserTicket\UserTicketsProcessor
+
     fit.service.user_ticket.get_list:
       public: true
       class: App\Service\UserTicket\GetList
       arguments:
         - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.user_ticket.processor'
 
     fit.service.user_ticket.check:
       public: true

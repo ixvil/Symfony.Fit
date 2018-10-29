@@ -10,7 +10,6 @@ namespace App\Command;
 
 use App\Entity\UserTicket;
 use App\Service\UserTicket\GetList;
-use Doctrine\Common\Collections\Collection;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,19 +34,18 @@ class GetUserTickets extends ContainerAwareCommand
             ->setHelp('Get User Tickets ...');
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return int|null|void
+     * @throws \Exception
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->getList = $this->getContainer()->get('fit.service.user_ticket.get_list');
-        $userTickets = $this->getList->get();
 
-        /** @var UserTicket[] $userTicketsArray */
-        $userTicketsArray = $userTickets->toArray();
-
-        usort(
-            $userTicketsArray, function (UserTicket $a, UserTicket $b) {
-            return ($a->getExpirationDate() < $b->getExpirationDate()) ? -1 : 1;
-        }
-        );
+        $userTickets = $this->getList->getExpirationUserTickets();
 
         echo 'Телефон';
         echo "\t\t";
@@ -66,20 +64,8 @@ class GetUserTickets extends ContainerAwareCommand
 
         echo "\n";
 
-
-        foreach ($userTicketsArray as $userTicket) {
-            if ($userTicket->getTicketPlan()->getType()->getId() == 3) {
-                continue;
-            }
-            if ($userTicket->getExpirationDate() < new \DateTime('04.09.2018')) {
-                continue;
-            }
-            if ($userTicket->getExpirationDate() > new \DateTime('16.09.2018')) {
-                continue;
-            }
-            if ($this->userTicketSum($userTicket->getUser()->getUserTickets()) > $userTicket->getLessonsExpires()) {
-                continue;
-            }
+        /** @var UserTicket $userTicket */
+        foreach ($userTickets as $userTicket) {
 
             echo $userTicket->getUser()->getPhone();
             echo "\t";
@@ -98,27 +84,5 @@ class GetUserTickets extends ContainerAwareCommand
         }
     }
 
-    /**
-     * @param Collection $userTickets
-     * @param int[]      $types
-     *
-     * @return int
-     */
-    public function userTicketSum(Collection $userTickets, array $types = [1, 2, 4]): int
-    {
-        $sum = 0;
-        foreach ($userTickets as $userTicket) {
-            if (!in_array($userTicket->getTicketPlan()->getType()->getId(), $types)) {
-                continue;
-            }
-            if (!$userTicket->getIsActive()) {
-                continue;
-            }
-            $sum += $userTicket->getLessonsExpires();
-        }
-
-        return $sum;
-
-    }
 
 }
