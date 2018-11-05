@@ -108,6 +108,7 @@ class LessonController extends AbstractController
         $user = $this->getCurrentUser();
         $content = json_decode($request->getContent());
         $lessonId = $content->lessonId;
+		$count = (int)$content->count;
 
         if (!$this->checker->checkUserCanClose($user, $lessonId)) {
             return $this->json(['error' => 'You can\'t manage this lesson']);
@@ -116,7 +117,7 @@ class LessonController extends AbstractController
         /** @var Lesson $lesson */
         $lesson = $this->entityManager->find(Lesson::class, $lessonId);
 
-        $this->lessonManager->closeLesson($lesson);
+        $this->lessonManager->closeLesson($lesson, $count);
 
         return $this->json(['lesson' => $lesson->clearCircularReferences()]);
 

@@ -36,15 +36,17 @@ class LessonManager
         $this->logger = $logger;
     }
 
-    /**
-     * @param Lesson $lesson
-     *
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     */
-    public function closeLesson(Lesson $lesson)
+	/**
+	 * @param Lesson $lesson
+	 *
+	 * @param int    $count
+	 *
+	 * @throws \Doctrine\ORM\ORMException
+	 * @throws \Doctrine\ORM\OptimisticLockException
+	 */
+    public function closeLesson(Lesson $lesson, int $count = 0)
     {
-        $lesson->setOverriddenUsersLimit(0);
+        $lesson->setOverriddenUsersLimit($count);
 
         $this->entityManager->persist($lesson);
         $this->entityManager->flush($lesson);
