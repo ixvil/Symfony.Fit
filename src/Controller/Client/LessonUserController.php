@@ -135,7 +135,7 @@ class LessonUserController extends AbstractController
 
         $lesson = $this->entityManager->find(Lesson::class, $lessonId);
 
-        return $this->json(['lesson' => $lesson->clearCircularReferences(), 'user' => $user->clearCircularReferences()], 200);
+        return $this->json(['lesson' => $lesson->clearCircularReferences(false), 'user' => $user->clearCircularReferences()], 200);
     }
 
     /**

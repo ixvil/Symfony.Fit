@@ -119,7 +119,7 @@ class LessonController extends AbstractController
 
         $this->lessonManager->closeLesson($lesson, $count);
 
-        return $this->json(['lesson' => $lesson->clearCircularReferences()]);
+        return $this->json(['lesson' => $lesson->clearCircularReferences(false)]);
 
     }
 }
