@@ -64,7 +64,7 @@ class TicketPlanController extends AbstractController
         $user = $this->getCurrentUser();
         $content = json_decode($request->getContent());
 
-        $useBonus = $content->useBonus;
+        $useBonus = false; //$content->useBonus;
 
         /** @var TicketPlan[] $ticketPlans */
         $ticketPlans = $this->ticketPlanRepository->matching(
