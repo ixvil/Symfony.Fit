@@ -15,7 +15,8 @@ use App\Entity\User;
  */
 class UserTicket
 {
-    /**
+	const DAYS_TO_ACTIVATE = 182;
+	/**
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
@@ -73,7 +74,7 @@ class UserTicket
      */
     private $lessonUsers;
 
-    public function __construct()
+	public function __construct()
     {
     }
 
@@ -165,7 +166,7 @@ class UserTicket
         $lessonUsers = $this->getLessonUsers();
 
         $minDate = $this->getDateCreatedAt();
-        $outDating = 92;
+        $outDating = self::DAYS_TO_ACTIVATE;
 
         $dDate = null;
         if (is_iterable($lessonUsers)) {

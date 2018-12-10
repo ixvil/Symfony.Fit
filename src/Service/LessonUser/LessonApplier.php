@@ -43,17 +43,19 @@ class LessonApplier
         $this->ticketPlanRepository = $entityManager->getRepository(TicketPlan::class);
     }
 
-    /**
-     * @param Lesson $lesson
-     * @param User   $user
-     *
-     * @return bool
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Exception
-     */
-    public function unApplyToLesson(Lesson $lesson, User $user): bool
+	/**
+	 * @param Lesson $lesson
+	 * @param User   $user
+	 *
+	 * @param bool   $force
+	 *
+	 * @return bool
+	 * @throws \Doctrine\ORM\ORMException
+	 * @throws \Doctrine\ORM\OptimisticLockException
+	 */
+    public function unApplyToLesson(Lesson $lesson, User $user, $force = false): bool
     {
-        if ($lesson->getStartDateTime()->getTimestamp() - 60 * 60 * 6 < time()) {
+        if (!$force && $lesson->getStartDateTime()->getTimestamp() - 60 * 60 * 6 < time()) {
             throw new ApplyToLessonException('Отмена невозможна - до начала занятия осталось меньше 6 часов');
         }
 
