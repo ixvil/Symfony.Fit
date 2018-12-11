@@ -126,9 +126,9 @@ class LessonUserController extends AbstractController
 
 		/** @var LessonUser $lessonUser */
 		$lessonUser = $this->entityManager->find(LessonUser::class, $lessonUserId);
-		$userCanClose = $this->checker->checkUserCanClose($user, $lessonUser->getLesson()->getId());
+		$userCanManage = $this->checker->checkUserCanManage($user, $lessonUser->getLesson()->getId());
 
-		if (!$userCanClose) {
+		if (!$userCanManage) {
 			return $this->json(['error' => 'You can\'t manage this lesson']);
 		}
 
@@ -182,6 +182,50 @@ class LessonUserController extends AbstractController
 		}
 
 		$lesson = $this->entityManager->find(Lesson::class, $lessonId);
+
+		return $this->json([
+			'lesson' => $lesson->clearCircularReferences(false),
+			'user'   => $user->clearCircularReferences(),
+		], 200);
+	}
+
+	/**
+	 * @Route("/managerAdd", name="lessonUser_managerAdd", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 * @throws \Doctrine\ORM\TransactionRequiredException
+	 */
+	public function managerAdd(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
+
+		$content = json_decode($request->getContent());
+		$lessonId = $content->lessonId;
+
+		/** @var Lesson $lesson */
+		$lesson = $this->entityManager->find(Lesson::class, $lessonId);
+		$userCanManage = $this->checker->checkUserCanManage($user, $lesson->getId());
+
+		if (!$userCanManage) {
+			return $this->json(['error' => 'You can\'t manage this lesson']);
+		}
+
+		$phone = $content->phone;
+		if (!$phone) {
+			return $this->json(['error' => 'Введите номер для поиска']);
+		}
+		try {
+			$this->lessonApplier->addToLesson(
+				$lesson,
+				$phone
+			);
+		} catch (ApplyToLessonException $e) {
+			return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+		}
 
 		return $this->json([
 			'lesson' => $lesson->clearCircularReferences(false),
