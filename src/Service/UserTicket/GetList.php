@@ -42,10 +42,15 @@ class GetList
 		$this->userTicketsProcessor = $userTicketsProcessor;
 	}
 
-	private function get(): Collection
+	/**
+	 * @param int|null $limit
+	 *
+	 * @return Collection
+	 */
+	private function get(?int $limit = null): Collection
 	{
 		$userTickets = $this->userTicketRepository->matching(
-			Criteria::create()->orderBy(['id' => 'DESC'])
+			Criteria::create()->orderBy(['id' => 'DESC'])->setMaxResults($limit)
 		);
 
 		return $userTickets;
@@ -56,7 +61,7 @@ class GetList
 	 */
 	public function getNewTickets(): Collection
 	{
-		$userTickets = $this->get();
+		$userTickets = $this->get(30);
 
 		/** @var UserTicket[] $userTicketsArray */
 		$userTicketsArray = $userTickets->toArray();
