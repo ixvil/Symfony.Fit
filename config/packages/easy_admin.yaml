@@ -1,0 +1,140 @@
+easy_admin:
+  #  design:
+  #    menu:
+  #      Client:
+  #        entity: Client
+  #        label: 'Клиенты'
+  #      UserTicket:
+  #        entity: UserTicket
+  #        label: 'Абонементы'
+  #      LessonUser:
+  #        entity: LessonUser
+  #        label: 'Тренировки'
+  #      empty:
+  #        label: '--'
+  #      Trainer:
+  #        entity: Trainer
+  #        label: 'Тренеры'
+  #      Lesson:
+  #        entity: Lesson
+  #        label: 'Занятия'
+  #      LessonType:
+  #        entity: LessonType
+  #        label: 'Дисциплины'
+  #      LessonSet:
+  #        entity: LessonSet
+  #        label: 'Программы'
+  #      empty2:
+  #        label: '--'
+  #      PromoСode:
+  #        entity: PromoCode
+  #        label: 'Промокоды'
+  #      Discount:
+  #        entity: Discount
+  #        label: 'Скидки'
+
+  list:
+    max_results: 50
+    title: '%%entity_label%%'
+    actions:
+    - { name: 'show', label: 'Show' }
+    - { name: 'edit', label: 'Edit' }
+    - { name: 'delete', label: 'Delete' }
+
+  edit:
+    title: '%%entity_label%% #%%entity_id%%'
+  show:
+    title: '%%entity_label%% #%%entity_id%%'
+  new:
+    title: 'New %%entity_label%%'
+  site_name: 'Stretch&GO admin'
+  entities:
+
+    Client:
+      class: App\Entity\User
+      label: 'Клиенты'
+      list:
+        dql_filter: 'entity.type = 3'
+        fields: ['id', 'phone', 'name', 'userTickets', 'bonusBalance']
+      edit:
+        fields: ['phone', 'name', 'bonusBalance']
+      new:
+        fields: ['phone', 'name', 'bonusBalance', 'type']
+      disabled_actions: ['delete']
+
+    UserTicket:
+      class: App\Entity\UserTicket
+      label: 'Абонементы'
+      disabled_actions: ['delete']
+      edit:
+        fields: ['dateCreatedAt', 'lessonsExpires', 'isActive', 'ticketPlan', 'user']
+      new:
+        fields: ['dateCreatedAt', 'lessonsExpires', 'isActive', 'ticketPlan', 'user']
+
+    LessonUser:
+      class: App\Entity\LessonUser
+      label: 'Посещения'
+      list:
+        actions:
+        - { name: 'delete', label: 'Delete' }
+      new:
+        fields:
+        - 'user'
+        - 'userTicket'
+        - 'lesson'
+        - 'status'
+
+
+      disabled_actions: ['edit']
+
+    Trainer:
+      class: App\Entity\User
+      label: 'Тренеры'
+      list:
+        dql_filter: 'entity.type = 2'
+        fields: ['id', 'phone', 'name']
+      edit:
+        fields: ['phone', 'name']
+      new:
+        fields: ['phone', 'name', 'bonusBalance', 'type']
+      show:
+        fields: ['phone', 'name']
+      disabled_actions: ['delete']
+
+
+
+    Lesson:
+      class: App\Entity\Lesson
+      label: 'Тренировка'
+      disabled_actions: ['delete']
+      list:
+        fields: ['id', 'lessonSet', 'hall', 'startDateTime', 'overriddenUsersLimit', 'lessonUsers']
+      edit:
+        fields: ['startDateTime', 'hall', 'lessonSet', 'overriddenUsersLimit']
+      new:
+        fields: ['startDateTime', 'hall', 'lessonSet', 'overriddenUsersLimit']
+
+    LessonType:
+      class: App\Entity\LessonType
+      label: 'Типы тренировок'
+      disabled_actions: ['delete']
+
+    LessonSet:
+      class: App\Entity\LessonSet
+      disabled_actions: ['delete']
+      list:
+        fields: ['id', 'lessonType', 'trainerUser', 'usersLimit']
+      edit:
+        fields: ['lessonType', 'trainerUser', 'usersLimit']
+      new:
+        fields: ['lessonType', 'trainerUser', 'usersLimit']
+      show:
+        fields: ['lessonType', 'trainerUser', 'usersLimit']
+
+    PromoCode:
+      class: App\Entity\PromoCode
+      label: 'Промокоды'
+
+    Discount:
+      class: App\Entity\Discount
+      label: 'Скидки'

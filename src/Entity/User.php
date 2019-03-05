@@ -16,141 +16,150 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
  */
 class User
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+	/**
+	 * @var int
+	 *
+	 * @ORM\Column(name="id", type="integer", nullable=false)
+	 * @ORM\Id
+	 * @ORM\GeneratedValue(strategy="IDENTITY")
+	 */
+	private $id;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="phone", type="string", length=64, nullable=true)
-     */
-    private $phone;
+	/**
+	 * @var string|null
+	 *
+	 * @ORM\Column(name="phone", type="string", length=64, nullable=true)
+	 */
+	private $phone;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="name", type="string", length=256, nullable=true)
-     */
-    private $name;
+	/**
+	 * @var string|null
+	 *
+	 * @ORM\Column(name="name", type="string", length=256, nullable=true)
+	 */
+	private $name;
 
-    /**
-     * @var Collection
-     * @MaxDepth(1)
-     * @ORM\OneToMany(targetEntity="App\Entity\UserTicket", mappedBy="user")
-     */
-    private $userTickets;
+	/**
+	 * @var Collection
+	 * @MaxDepth(1)
+	 * @ORM\OneToMany(targetEntity="App\Entity\UserTicket", mappedBy="user")
+	 */
+	private $userTickets;
 
-    /**
-     * @var UserType
-     * @MaxDepth(1)
-     * @ORM\ManyToOne(targetEntity="UserType")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="type_id", referencedColumnName="id")
-     * })
-     */
-    private $type;
+	/**
+	 * @var UserType
+	 * @MaxDepth(1)
+	 * @ORM\ManyToOne(targetEntity="UserType")
+	 * @ORM\JoinColumns({
+	 *   @ORM\JoinColumn(name="type_id", referencedColumnName="id")
+	 * })
+	 */
+	private $type;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $bonusBalance;
-    
+	/**
+	 * @var integer|null
+	 * @ORM\Column(type="integer", nullable=true)
+	 */
+	private $bonusBalance;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
-    public function getPhone(): ?string
-    {
-        return $this->phone;
-    }
+	public function getId(): ?int
+	{
+		return $this->id;
+	}
 
-    public function setPhone(?string $phone): self
-    {
-        $this->phone = $phone;
+	public function getPhone(): ?string
+	{
+		return $this->phone;
+	}
 
-        return $this;
-    }
+	public function setPhone(?string $phone): self
+	{
+		$this->phone = $phone;
 
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
+		return $this;
+	}
 
-    public function setName(?string $name): self
-    {
-        $this->name = $name;
+	public function getName(): ?string
+	{
+		return $this->name;
+	}
 
-        return $this;
-    }
+	public function setName(?string $name): self
+	{
+		$this->name = $name;
 
-    public function getType(): ?UserType
-    {
-        return $this->type;
-    }
+		return $this;
+	}
 
-    public function setType(?UserType $type): self
-    {
-        $this->type = $type;
+	public function getType(): ?UserType
+	{
+		return $this->type;
+	}
 
-        return $this;
-    }
+	public function setType(?UserType $type): self
+	{
+		$this->type = $type;
 
-    /**
-     * @param Collection $userTickets
-     * @return User
-     */
-    public function setUserTickets(?Collection $userTickets): User
-    {
-        $this->userTickets = $userTickets;
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @return Collection
-     */
-    public function getUserTickets(): ?Collection
-    {
-        return $this->userTickets;
-    }
+	/**
+	 * @param Collection $userTickets
+	 *
+	 * @return User
+	 */
+	public function setUserTickets(?Collection $userTickets): User
+	{
+		$this->userTickets = $userTickets;
 
-    /**
-     * @return $this
-     */
-    public function clearCircularReferences()
-    {
-        if ($this->userTickets != null) {
-            /** @var UserTicket $userTicket */
-            foreach ($this->userTickets as $userTicket) {
-                $userTicket->setUser(null);
-                $lessonUsers = $userTicket->getLessonUsers();
-                foreach ($lessonUsers as $lessonUser) {
-                    $lessonUser->setUserTicket(null);
-                    $lessonUser->setUser(null);
-                    $lessonUser->getLesson()->setLessonUsers(new ArrayCollection());
-                }
-            }
-        }
-        return $this;
-    }
+		return $this;
+	}
 
-    public function getBonusBalance(): ?int
-    {
-        return $this->bonusBalance;
-    }
+	/**
+	 * @return Collection
+	 */
+	public function getUserTickets(): ?Collection
+	{
+		return $this->userTickets;
+	}
 
-    public function setBonusBalance(?int $bonusBalance): self
-    {
-        $this->bonusBalance = $bonusBalance;
+	/**
+	 * @return $this
+	 */
+	public function clearCircularReferences()
+	{
+		if ($this->userTickets != null) {
+			/** @var UserTicket $userTicket */
+			foreach ($this->userTickets as $userTicket) {
+				$userTicket->setUser(null);
+				$lessonUsers = $userTicket->getLessonUsers();
+				foreach ($lessonUsers as $lessonUser) {
+					$lessonUser->setUserTicket(null);
+					$lessonUser->setUser(null);
+					$lessonUser->getLesson()->setLessonUsers(new ArrayCollection());
+				}
+			}
+		}
 
-        return $this;
-    }
+		return $this;
+	}
+
+	public function getBonusBalance(): ?int
+	{
+		return $this->bonusBalance;
+	}
+
+	public function setBonusBalance(?int $bonusBalance): self
+	{
+		$this->bonusBalance = $bonusBalance;
+
+		return $this;
+	}
+
+	public function __toString(): string
+	{
+		return $this->getName().'('.$this->getPhone().')';
+	}
 
 }

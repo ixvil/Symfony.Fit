@@ -23,7 +23,7 @@ class PromoCode
 
 	/**
 	 * @ORM\ManyToOne(targetEntity="App\Entity\TicketPlan")
-	 * @ORM\JoinColumn(nullable=false)
+	 * @ORM\JoinColumn(nullable=true)
 	 */
 	private $ticketPlan = null;
 
@@ -77,7 +77,7 @@ class PromoCode
 	 */
 	public function isActivated(): bool
 	{
-		return $this->isActivated;
+		return $this->isActivated ?? false;
 	}
 
 	/**
@@ -105,9 +105,9 @@ class PromoCode
 	}
 
 	/**
-	 * @return int
+	 * @return User|null
 	 */
-	public function getActivatedBy(): int
+	public function getActivatedBy(): ?User
 	{
 		return $this->activatedBy;
 	}

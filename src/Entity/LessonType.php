@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Helpers\NameTrait;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -12,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class LessonType
 {
+	use NameTrait;
     /**
      * @var int
      *

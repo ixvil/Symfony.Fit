@@ -83,9 +83,9 @@ class UserTicket
 		return $this->id;
 	}
 
-	public function getDateCreatedAt(): ?\DateTimeInterface
+	public function getDateCreatedAt(): \DateTimeInterface
 	{
-		return $this->dateCreatedAt;
+		return $this->dateCreatedAt ?? new \DateTime();
 	}
 
 	public function setDateCreatedAt(?\DateTimeInterface $dateCreatedAt): self
@@ -196,6 +196,20 @@ class UserTicket
 
 
 		return new \DateTime($expirationDate->format('Y-m-d'));
+	}
+
+	public function __toString(): string
+	{
+		if ($this->getIsActive() && $this->getLessonsExpires() > 0) {
+			return $this->getUser()->__toString().' '.$this->getTicketPlan()->getName().' '.
+				$this->getDateCreatedAt()->format('d.m.Y').' (ост. '
+				.$this->getLessonsExpires()
+				.', до '.$this->getExpirationDate()->format('d.m.Y').')';
+		} else {
+			return $this->getUser()->__toString().' '.$this->getTicketPlan()->getName().' '.
+				$this->getDateCreatedAt()->format('d.m.Y').' (не активен)';
+		}
+
 	}
 
 
