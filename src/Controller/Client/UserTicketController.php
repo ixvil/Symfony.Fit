@@ -83,4 +83,51 @@ class UserTicketController extends AbstractController
 
 		return $this->json(['tickets' => $array]);
 	}
+
+
+	/**
+	 * @Route("/new/", name="ut_new_get", methods="GET")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws \Exception
+	 */
+	public function getNew(Request $request): Response
+	{
+		$this->auth($request);
+
+		$user = $this->getCurrentUser();
+		if ($user->getType()->getId() !== 1) {
+			throw new AccessDeniedHttpException();
+		}
+
+		$userTickets = $this->getList->getNewTickets();
+		$array = [];
+		/** @var UserTicket $userTicket */
+		foreach ($userTickets as $userTicket) {
+			$user = $userTicket->getUser();
+
+			$dUserTickets = $user->getUserTickets();
+			$new = [];
+			foreach ($dUserTickets as $dUserTicket){
+				$clone = clone $dUserTicket;
+				$clone->setUser(null);
+				$clone->setLessonUsers(new ArrayCollection());
+				$new[] = $clone;
+			}
+			$user->setUserTickets(new ArrayCollection($new));
+
+			$lessonUsers = $userTicket->getLessonUsers();
+			foreach ($lessonUsers as $lessonUser){
+				$lesson = $lessonUser->getLesson();
+				$lesson->setLessonUsers(new ArrayCollection());
+				$lesson->setLessonSet(null);
+				$lessonUser->setUser(null);
+				$lessonUser->setUserTicket(null);
+			}
+			$array[] = $userTicket;
+		}
+
+		return $this->json(['tickets' => $array]);
+	}
 }

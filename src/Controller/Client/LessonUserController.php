@@ -37,141 +37,237 @@ use Symfony\Component\Routing\Annotation\Route;
 class LessonUserController extends AbstractController
 {
 
-    /** @var \Doctrine\Common\Persistence\ObjectManager $entityManager */
-    private $entityManager;
+	/** @var \Doctrine\Common\Persistence\ObjectManager $entityManager */
+	private $entityManager;
 
-    /** @var EntityRepository $lessonRepository */
-    private $lessonRepository;
+	/** @var EntityRepository $lessonRepository */
+	private $lessonRepository;
 
-    /**
-     * @var LessonApplier
-     */
-    private $lessonApplier;
-    /**
-     * @var Checker
-     */
-    private $checker;
+	/**
+	 * @var LessonApplier
+	 */
+	private $lessonApplier;
+	/**
+	 * @var Checker
+	 */
+	private $checker;
+	/**
+	 * @var \Doctrine\Common\Persistence\ObjectRepository|EntityRepository
+	 */
+	private $lessonUserRepository;
 
-    public function __construct(
-        TokenGenerator $tokenGenerator,
-        EntityManager $entityManager,
-        LessonApplier $lessonApplier,
-        Checker $checker
-    )
-    {
-        parent::__construct($tokenGenerator);
-        $this->lessonApplier = $lessonApplier;
-        $this->entityManager = $entityManager;
-        $this->lessonRepository = $entityManager->getRepository(Lesson::class);
-        $this->checker = $checker;
-    }
+	public function __construct(
+		TokenGenerator $tokenGenerator,
+		EntityManager $entityManager,
+		LessonApplier $lessonApplier,
+		Checker $checker
+	) {
+		parent::__construct($tokenGenerator);
+		$this->lessonApplier = $lessonApplier;
+		$this->entityManager = $entityManager;
+		$this->lessonRepository = $entityManager->getRepository(Lesson::class);
+		$this->lessonUserRepository = $entityManager->getRepository(LessonUser::class);
+		$this->checker = $checker;
+	}
 
-    /**
-     * @Route("/delete", name="lessonUser_delete", methods="POST")
-     * @param Request $request
-     * @return Response
-     * @throws ORMException
-     */
-    public function delete(Request $request): Response
-    {
-        $this->auth($request);
-        $user = $this->getCurrentUser();
+	/**
+	 * @Route("/delete", name="lessonUser_delete", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 */
+	public function delete(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
 
-        $content = json_decode($request->getContent());
-        $lessonId = $content->lesson->id;
+		$content = json_decode($request->getContent());
+		$lessonId = $content->lesson->id;
 
-        /** @var Lesson $lesson */
-        $lesson = $this->lessonRepository->find($lessonId);
+		/** @var Lesson $lesson */
+		$lesson = $this->lessonRepository->find($lessonId);
 
-        try {
-            $this->lessonApplier->unApplyToLesson($lesson, $user);
-        } catch (ApplyToLessonException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
-        }
+		try {
+			$this->lessonApplier->unApplyToLesson($lesson, $user);
+		} catch (ApplyToLessonException $e) {
+			return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+		}
 
 
-        $lessons = $this->lessonRepository->matching(
-            Criteria::create()
-                ->andWhere(Criteria::expr()->gte('startDateTime', new DateTime(date('Y-m-d'))))
-                ->orderBy(['startDateTime' => 'ASC'])
-        );
+		$lessons = $this->lessonRepository->matching(
+			Criteria::create()
+				->andWhere(Criteria::expr()->gte('startDateTime', new DateTime(date('Y-m-d'))))
+				->orderBy(['startDateTime' => 'ASC'])
+		);
 
-        /** @var Lesson $lesson */
-        foreach ($lessons as $lesson) {
-            $lesson->clearCircularReferences();
-        }
+		/** @var Lesson $lesson */
+		foreach ($lessons as $lesson) {
+			$lesson->clearCircularReferences();
+		}
 
-        return $this->json(['lessons' => $lessons, 'user' => $user->clearCircularReferences()], 200);
-    }
+		return $this->json(['lessons' => $lessons, 'user' => $user->clearCircularReferences()], 200);
+	}
 
-    /**
-     * @Route("/check", name="lessonUser_check", methods="POST")
-     * @param Request $request
-     * @return Response
-     * @throws ORMException
-     * @throws OptimisticLockException
-     * @throws \Doctrine\ORM\TransactionRequiredException
-     */
-    public function check(Request $request): Response
-    {
-        $this->auth($request);
-        $user = $this->getCurrentUser();
-        $content = json_decode($request->getContent());
-        $lessonId = $content->lessonId;
-        $clientId = $content->clientId;
+	/**
+	 * @Route("/managerDelete", name="lessonUser_managerDelete", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 */
+	public function managerDelete(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
 
-        if (!is_numeric($clientId)) {
-            return $this->json(['error' => 'Wrong client Id']);
-        }
-        $clientId = (int)$clientId;
+		$content = json_decode($request->getContent());
+		$lessonUserId = $content->lessonUserId;
 
-        if (!$this->checker->checkUserCanManage($user, $lessonId)) {
-            return $this->json(['error' => 'You can\'t manage this lesson']);
-        }
+		/** @var LessonUser $lessonUser */
+		$lessonUser = $this->entityManager->find(LessonUser::class, $lessonUserId);
+		$userCanManage = $this->checker->checkUserCanManage($user, $lessonUser->getLesson()->getId());
 
-        if (!$this->checker->markAsChecked($lessonId, (int)$clientId)) {
-            return $this->json(['error' => 'There is no lessonUser']);
-        }
+		if (!$userCanManage) {
+			return $this->json(['error' => 'You can\'t manage this lesson']);
+		}
 
-        $lesson = $this->entityManager->find(Lesson::class, $lessonId);
+		try {
+			$this->lessonApplier->unApplyToLesson(
+				$lessonUser->getLesson(),
+				$lessonUser->getUser(),
+				true
+			);
+		} catch (ApplyToLessonException $e) {
+			return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+		}
 
-        return $this->json(['lesson' => $lesson->clearCircularReferences(false), 'user' => $user->clearCircularReferences()], 200);
-    }
 
-    /**
-     * @Route("/", name="lessonUser_post", methods="POST")
-     * @param Request $request
-     * @return Response
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function post(Request $request): Response
-    {
-        $this->auth($request);
-        $user = $this->getCurrentUser();
-        $content = json_decode($request->getContent());
-        $lessonId = $content->state->dialog->id;
+		$lesson = $this->entityManager->find(Lesson::class, $lessonUser->getLesson()->getId());
 
-        /** @var Lesson $lesson */
-        $lesson = $this->lessonRepository->find($lessonId);
+		return $this->json([
+			'lesson' => $lesson->clearCircularReferences(false),
+			'user'   => $user->clearCircularReferences(),
+		], 200);
+	}
 
-        try {
-            $this->lessonApplier->applyToLesson($lesson, $user);
-        } catch (ApplyToLessonException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
-        }
+	/**
+	 * @Route("/check", name="lessonUser_check", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 * @throws \Doctrine\ORM\TransactionRequiredException
+	 */
+	public function check(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
+		$content = json_decode($request->getContent());
+		$lessonId = $content->lessonId;
+		$clientId = $content->clientId;
 
-        $lessons = $this->lessonRepository->matching(
-            Criteria::create()
-                ->andWhere(Criteria::expr()->gte('startDateTime', new DateTime(date('Y-m-d'))))
-                ->orderBy(['startDateTime' => 'ASC'])
-        );
+		if (!is_numeric($clientId)) {
+			return $this->json(['error' => 'Wrong client Id']);
+		}
+		$clientId = (int)$clientId;
 
-        /** @var Lesson $lesson */
-        foreach ($lessons as $lesson) {
-            $lesson->clearCircularReferences();
-        }
+		if (!$this->checker->checkUserCanManage($user, $lessonId)) {
+			return $this->json(['error' => 'You can\'t manage this lesson']);
+		}
 
-        return $this->json(['lessons' => $lessons, 'user' => $user], 200);
-    }
+		if (!$this->checker->markAsChecked($lessonId, (int)$clientId)) {
+			return $this->json(['error' => 'There is no lessonUser']);
+		}
+
+		$lesson = $this->entityManager->find(Lesson::class, $lessonId);
+
+		return $this->json([
+			'lesson' => $lesson->clearCircularReferences(false),
+			'user'   => $user->clearCircularReferences(),
+		], 200);
+	}
+
+	/**
+	 * @Route("/managerAdd", name="lessonUser_managerAdd", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 * @throws \Doctrine\ORM\TransactionRequiredException
+	 */
+	public function managerAdd(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
+
+		$content = json_decode($request->getContent());
+		$lessonId = $content->lessonId;
+
+		/** @var Lesson $lesson */
+		$lesson = $this->entityManager->find(Lesson::class, $lessonId);
+		$userCanManage = $this->checker->checkUserCanManage($user, $lesson->getId());
+
+		if (!$userCanManage) {
+			return $this->json(['error' => 'You can\'t manage this lesson']);
+		}
+
+		$phone = $content->phone;
+		if (!$phone) {
+			return $this->json(['error' => 'Введите номер для поиска']);
+		}
+		try {
+			$this->lessonApplier->addToLesson(
+				$lesson,
+				$phone
+			);
+		} catch (ApplyToLessonException $e) {
+			return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+		}
+
+		return $this->json([
+			'lesson' => $lesson->clearCircularReferences(false),
+			'user'   => $user->clearCircularReferences(),
+		], 200);
+	}
+
+	/**
+	 * @Route("/", name="lessonUser_post", methods="POST")
+	 * @param Request $request
+	 *
+	 * @return Response
+	 * @throws ORMException
+	 * @throws OptimisticLockException
+	 */
+	public function post(Request $request): Response
+	{
+		$this->auth($request);
+		$user = $this->getCurrentUser();
+		$content = json_decode($request->getContent());
+		$lessonId = $content->state->dialog->id;
+
+		/** @var Lesson $lesson */
+		$lesson = $this->lessonRepository->find($lessonId);
+
+		try {
+			$this->lessonApplier->applyToLesson($lesson, $user);
+		} catch (ApplyToLessonException $e) {
+			return $this->json(['error' => $e->getMessage()], $e->getStatusCode());
+		}
+
+		$lessons = $this->lessonRepository->matching(
+			Criteria::create()
+				->andWhere(Criteria::expr()->gte('startDateTime', new DateTime(date('Y-m-d'))))
+				->orderBy(['startDateTime' => 'ASC'])
+		);
+
+		/** @var Lesson $lesson */
+		foreach ($lessons as $lesson) {
+			$lesson->clearCircularReferences();
+		}
+
+		return $this->json(['lessons' => $lessons, 'user' => $user], 200);
+	}
 }

@@ -56,6 +56,7 @@ class CodeProcessor
         $userCode = new UserCode();
         $userCode
             ->setCode($code)
+			->setTimestamp(time())
             ->setUser($user)
             ->setIsUsed(false);
 

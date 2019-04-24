@@ -13,144 +13,148 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
  */
 class LessonSet
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+	/**
+	 * @var int
+	 *
+	 * @ORM\Column(name="id", type="integer", nullable=false)
+	 * @ORM\Id
+	 * @ORM\GeneratedValue(strategy="IDENTITY")
+	 */
+	private $id;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="name", type="string", length=256, nullable=true)
-     */
-    private $name;
+	/**
+	 * @var string|null
+	 *
+	 * @ORM\Column(name="name", type="string", length=256, nullable=true)
+	 */
+	private $name;
 
-    /**
-     * @var LessonType
-     * @MaxDepth(1)
-     *
-     * @ORM\ManyToOne(targetEntity="LessonType")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="lesson_type_id", referencedColumnName="id")
-     * })
-     */
-    private $lessonType;
+	/**
+	 * @var LessonType
+	 * @MaxDepth(1)
+	 *
+	 * @ORM\ManyToOne(targetEntity="LessonType")
+	 * @ORM\JoinColumns({
+	 *   @ORM\JoinColumn(name="lesson_type_id", referencedColumnName="id")
+	 * })
+	 */
+	private $lessonType;
 
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="users_limit", type="integer")
-     */
-    private $usersLimit;
+	/**
+	 * @var integer
+	 *
+	 * @ORM\Column(name="users_limit", type="integer")
+	 */
+	private $usersLimit;
 
-    /**
-     * @var User
-     * @MaxDepth(1)
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="trainer_user_id", referencedColumnName="id")
-     * })
-     */
-    private $trainerUser;
+	/**
+	 * @var User
+	 * @MaxDepth(1)
+	 * @ORM\ManyToOne(targetEntity="User")
+	 * @ORM\JoinColumns({
+	 *   @ORM\JoinColumn(name="trainer_user_id", referencedColumnName="id")
+	 * })
+	 */
+	private $trainerUser;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $photo;
+	/**
+	 * @ORM\Column(type="string", length=255, nullable=true)
+	 */
+	private $photo;
 
-    /**
-     * @ORM\Column(type="string", length=1024, nullable=true)
-     */
-    private $description;
+	/**
+	 * @ORM\Column(type="string", length=1024, nullable=true)
+	 */
+	private $description;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+	public function getId(): ?int
+	{
+		return $this->id;
+	}
 
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
+	public function getName(): ?string
+	{
+		return $this->name;
+	}
 
-    public function setName(?string $name): self
-    {
-        $this->name = $name;
+	public function setName(?string $name): self
+	{
+		$this->name = $name;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    public function getLessonType(): ?LessonType
-    {
-        return $this->lessonType;
-    }
+	public function getLessonType(): ?LessonType
+	{
+		return $this->lessonType;
+	}
 
-    public function setLessonType(?LessonType $lessonType): self
-    {
-        $this->lessonType = $lessonType;
+	public function setLessonType(?LessonType $lessonType): self
+	{
+		$this->lessonType = $lessonType;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    public function getTrainerUser(): ?User
-    {
-        return $this->trainerUser;
-    }
+	public function getTrainerUser(): ?User
+	{
+		return $this->trainerUser;
+	}
 
-    public function setTrainerUser(?User $trainerUser): self
-    {
-        $this->trainerUser = $trainerUser;
+	public function setTrainerUser(?User $trainerUser): self
+	{
+		$this->trainerUser = $trainerUser;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @param int $usersLimit
-     *
-     * @return LessonSet
-     */
-    public function setUsersLimit(int $usersLimit): LessonSet
-    {
-        $this->usersLimit = $usersLimit;
+	/**
+	 * @param int $usersLimit
+	 *
+	 * @return LessonSet
+	 */
+	public function setUsersLimit(int $usersLimit): LessonSet
+	{
+		$this->usersLimit = $usersLimit;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @return int
-     */
-    public function getUsersLimit(): int
-    {
-        return $this->usersLimit;
-    }
+	/**
+	 * @return int
+	 */
+	public function getUsersLimit(): int
+	{
+		return $this->usersLimit;
+	}
 
-    public function getPhoto(): ?string
-    {
-        return $this->photo;
-    }
+	public function getPhoto(): ?string
+	{
+		return $this->photo;
+	}
 
-    public function setPhoto(?string $photo): self
-    {
-        $this->photo = $photo;
+	public function setPhoto(?string $photo): self
+	{
+		$this->photo = $photo;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
+	public function getDescription(): ?string
+	{
+		return $this->description;
+	}
 
-    public function setDescription(?string $description): self
-    {
-        $this->description = $description;
+	public function setDescription(?string $description): self
+	{
+		$this->description = $description;
 
-        return $this;
-    }
+		return $this;
+	}
 
+	public function __toString(): string
+	{
+		return $this->getLessonType()->getName().' '.($this->getTrainerUser()->getName() ?: 'без имени');
+	}
 
 }

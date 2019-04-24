@@ -131,10 +131,16 @@ services:
       class: App\Service\LessonUser\LessonApplier
       arguments:
         - '@doctrine.orm.default_entity_manager'
+        - '@fit.service.finder'
       calls:
         - method: setLogger
           arguments:
             - '@logger'
+
+    fit.service.finder:
+      class: App\Service\User\Finder
+      arguments:
+        - '@doctrine.orm.default_entity_manager'
 
     fit.service.promocode.activator:
       class: App\Service\PromoCode\Activator

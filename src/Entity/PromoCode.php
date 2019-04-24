@@ -9,97 +9,126 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class PromoCode
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+	/**
+	 * @ORM\Id()
+	 * @ORM\GeneratedValue()
+	 * @ORM\Column(type="integer")
+	 */
+	private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $code;
+	/**
+	 * @ORM\Column(type="string", length=255)
+	 */
+	private $code;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\TicketPlan")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $ticketPlan;
+	/**
+	 * @ORM\ManyToOne(targetEntity="App\Entity\TicketPlan")
+	 * @ORM\JoinColumn(nullable=true)
+	 */
+	private $ticketPlan = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User")
-     * @ORM\JoinColumn(nullable=true)
-     */
-    private $activatedBy;
+	/**
+	 * @ORM\ManyToOne(targetEntity="App\Entity\User")
+	 * @ORM\JoinColumn(nullable=true)
+	 */
+	private $activatedBy;
 
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $isActivated;
+	/**
+	 * @ORM\Column(type="boolean")
+	 */
+	private $isActivated;
 
-    public function getId()
-    {
-        return $this->id;
-    }
+	/**
+	 * @ORM\Column(type="integer")
+	 */
+	private $bonusAmount = 0;
 
-    public function getCode(): ?string
-    {
-        return $this->code;
-    }
+	public function getId()
+	{
+		return $this->id;
+	}
 
-    public function setCode(string $code): self
-    {
-        $this->code = $code;
+	public function getCode(): ?string
+	{
+		return $this->code;
+	}
 
-        return $this;
-    }
+	public function setCode(string $code): self
+	{
+		$this->code = $code;
 
-    public function getTicketPlan(): ?TicketPlan
-    {
-        return $this->ticketPlan;
-    }
+		return $this;
+	}
 
-    public function setTicketPlan(?TicketPlan $ticketPlan): self
-    {
-        $this->ticketPlan = $ticketPlan;
+	public function getTicketPlan(): ?TicketPlan
+	{
+		return $this->ticketPlan;
+	}
 
-        return $this;
-    }
+	public function setTicketPlan(?TicketPlan $ticketPlan): self
+	{
+		$this->ticketPlan = $ticketPlan;
 
-    /**
-     * @return bool
-     */
-    public function isActivated(): bool
-    {
-        return $this->isActivated;
-    }
+		return $this;
+	}
 
-    /**
-     * @param bool $isActivated
-     * @return PromoCode
-     */
-    public function setIsActivated(bool $isActivated): self
-    {
-        $this->isActivated = $isActivated;
-        return $this;
-    }
+	/**
+	 * @return bool
+	 */
+	public function isActivated(): bool
+	{
+		return $this->isActivated ?? false;
+	}
 
-    /**
-     * @param User $activatedBy
-     * @return PromoCode
-     */
-    public function setActivatedBy(User $activatedBy): self
-    {
-        $this->activatedBy = $activatedBy;
-        return $this;
-    }
+	/**
+	 * @param bool $isActivated
+	 *
+	 * @return PromoCode
+	 */
+	public function setIsActivated(bool $isActivated): self
+	{
+		$this->isActivated = $isActivated;
 
-    /**
-     * @return int
-     */
-    public function getActivatedBy(): int
-    {
-        return $this->activatedBy;
-    }
+		return $this;
+	}
+
+	/**
+	 * @param User $activatedBy
+	 *
+	 * @return PromoCode
+	 */
+	public function setActivatedBy(User $activatedBy): self
+	{
+		$this->activatedBy = $activatedBy;
+
+		return $this;
+	}
+
+	/**
+	 * @return User|null
+	 */
+	public function getActivatedBy(): ?User
+	{
+		return $this->activatedBy;
+	}
+
+	/**
+	 * @param int $bonusAmount
+	 *
+	 * @return PromoCode
+	 */
+	public function setBonusAmount(int $bonusAmount): self
+	{
+		$this->bonusAmount = $bonusAmount;
+
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getBonusAmount(): int
+	{
+		return $this->bonusAmount;
+	}
 }

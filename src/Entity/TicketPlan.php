@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Helpers\NameTrait;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -12,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class TicketPlan
 {
+	use NameTrait;
     /**
      * @var int
      *
@@ -148,6 +150,5 @@ class TicketPlan
     {
         return $this->oldPrice;
     }
-
 
 }

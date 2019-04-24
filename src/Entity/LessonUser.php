@@ -110,5 +110,9 @@ class LessonUser
         return $this;
     }
 
+    public function __toString()
+	{
+		return $this->getUser()->__toString().' - '.$this->getLesson()->__toString();
+	}
 
 }
