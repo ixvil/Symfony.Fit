@@ -189,7 +189,7 @@ class Buy
 			$discount->setActiveTo(new \DateTime('2018-11-25 23:59:00'));
 			$discount->setTicketPlan($ticketPlan);
 			$discount->setUser($user);
-			$discount->setValue($ticketPlan->getPrice() / 2);
+			$discount->setValue($ticketPlan->getPrice() * 0.2);
 
 			$this->entityManager->persist($discount);
 			$this->entityManager->flush($discount);
