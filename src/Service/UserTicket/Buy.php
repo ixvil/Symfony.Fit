@@ -185,8 +185,8 @@ class Buy
 			}
 		} else {
 			$discount = new Discount();
-			$discount->setActiveFrom(new \DateTime('2018-11-22 21:00:00'));
-			$discount->setActiveTo(new \DateTime('2018-11-25 23:59:00'));
+			$discount->setActiveFrom(new \DateTime('2019-04-24 00:00:00'));
+			$discount->setActiveTo(new \DateTime('2019-04-27 23:59:00'));
 			$discount->setTicketPlan($ticketPlan);
 			$discount->setUser($user);
 			$discount->setValue($ticketPlan->getPrice() * 0.2);
