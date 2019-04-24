@@ -34,7 +34,7 @@ easy_admin:
   #        label: 'Скидки'
 
   list:
-    max_results: 50
+    max_results: 200
     title: '%%entity_label%%'
     actions:
     - { name: 'show', label: 'Show' }
@@ -101,12 +101,9 @@ easy_admin:
         fields: ['phone', 'name']
       disabled_actions: ['delete']
 
-
-
     Lesson:
       class: App\Entity\Lesson
       label: 'Тренировка'
-      disabled_actions: ['delete']
       list:
         fields: ['id', 'lessonSet', 'hall', 'startDateTime', 'overriddenUsersLimit', 'lessonUsers']
       edit:
