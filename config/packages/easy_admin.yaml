@@ -132,6 +132,14 @@ easy_admin:
       class: App\Entity\PromoCode
       label: 'Промокоды'
 
+    SalaryByLesson:
+      class: App\Entity\SalaryByLesson
+      disabled_actions: ['delete', 'edit', 'show', 'add']
+
+    SalaryByMonth:
+      class: App\Entity\SalaryByMonth
+      disabled_actions: ['delete', 'edit', 'show', 'add']
+      
     Discount:
       class: App\Entity\Discount
       label: 'Скидки'
