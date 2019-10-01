@@ -44,6 +44,7 @@ easy_admin:
   edit:
     title: '%%entity_label%% #%%entity_id%%'
   show:
+    max_results: 100
     title: '%%entity_label%% #%%entity_id%%'
   new:
     title: 'New %%entity_label%%'
@@ -85,7 +86,7 @@ easy_admin:
         - 'status'
 
 
-      disabled_actions: ['edit']
+#      disabled_actions: ['edit']
 
     Trainer:
       class: App\Entity\User
@@ -134,6 +135,9 @@ easy_admin:
 
     SalaryByLesson:
       class: App\Entity\SalaryByLesson
+      list:
+        sort: ['start', 'DESC']
+#        fields: ['summ']
       disabled_actions: ['delete', 'edit', 'show', 'add']
 
     SalaryByMonth:

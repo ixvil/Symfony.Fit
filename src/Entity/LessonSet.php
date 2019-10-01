@@ -123,7 +123,7 @@ class LessonSet
 	/**
 	 * @return int
 	 */
-	public function getUsersLimit(): int
+	public function getUsersLimit()
 	{
 		return $this->usersLimit;
 	}
