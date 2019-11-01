@@ -16,6 +16,8 @@ use App\Repository\PaymentOrderRepository;
 use App\Repository\PaymentOrderStatusRepository;
 use App\Service\Sberbank\Client;
 use App\Service\Sberbank\Commands\GetOrderStatus;
+use App\Service\Sberbank\Commands\GetState;
+use App\Service\Sberbank\TinkoffClient;
 use App\Service\Sms\Sender;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManager;
@@ -34,6 +36,11 @@ class Check
             5 => PaymentOrderStatusRepository::STATUS_NEW,
             6 => PaymentOrderStatusRepository::STATUS_CANCELED,
         ];
+    private $tinkoffStatuses = [
+    	'CANCELED' => PaymentOrderStatusRepository::STATUS_CANCELED,
+		'DEADLINE_EXPIRED' => PaymentOrderStatusRepository::STATUS_CANCELED,
+		'CONFIRMED' => PaymentOrderStatusRepository::STATUS_PAID,
+	];
     /**
      * @var PaymentOrderStatusRepository
      */
@@ -57,12 +64,17 @@ class Check
      * @var Sender
      */
     private $sender;
+	/**
+	 * @var TinkoffClient
+	 */
+	private $tinkoffClient;
 
-    public function __construct(
+	public function __construct(
         EntityManager $entityManager,
         Client $sberbankClient,
         Buy $buy,
-        Sender $sender
+        Sender $sender,
+		TinkoffClient $tinkoffClient
     ) {
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->paymentOrderRepository = $entityManager->getRepository(PaymentOrder::class);
@@ -71,7 +83,8 @@ class Check
         $this->sberbankClient = $sberbankClient;
         $this->buy = $buy;
         $this->sender = $sender;
-    }
+		$this->tinkoffClient = $tinkoffClient;
+	}
 
     /**
      * @throws \Doctrine\ORM\ORMException
@@ -88,22 +101,43 @@ class Check
 
         /** @var PaymentOrder $paymentOrder */
         foreach ($paymentOrders as $paymentOrder) {
-            $command = new GetOrderStatus();
-            $command->setOrderNumber($paymentOrder->getId());
-            $answer = $this->sberbankClient->execute($command);
-            $this->logger->info($paymentOrder->getId().':: '.print_r($answer));
+        	if($paymentOrder->getBankPaymentId() !== null){
+        		$command = new GetState();
+        		$command->setPaymentId($paymentOrder->getBankPaymentId());
+        		$answer = $this->tinkoffClient->execute($command);
+				$this->logger->info($paymentOrder->getId().':: '.print_r($answer));
+				if (isset($answer['orderStatus'])) {
+					$this->logger->info('Order status id '.$answer['orderStatus']);
+					if(!isset($this->tinkoffStatuses[$answer['orderStatus']])){
+						continue;
+					}
+					if ($this->tinkoffStatuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
+						$this->buy->confirmOrder($paymentOrder);
+						$this->sender->sendToOwner('Hooray! New payment =) '.$paymentOrder->getAmount());
+					} else {
+						if ($this->tinkoffStatuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
+							$this->buy->cancelOrder($paymentOrder);
+						}
+					}
+				}
+			} else {
+				$command = new GetOrderStatus();
+				$command->setOrderNumber($paymentOrder->getId());
+				$answer = $this->sberbankClient->execute($command);
+				$this->logger->info($paymentOrder->getId().':: '.print_r($answer));
 
-            if (isset($answer['orderStatus'])) {
-                $this->logger->info('Order status id '.$answer['orderStatus']);
-                if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
-                    $this->buy->confirmOrder($paymentOrder);
-                    $this->sender->sendToOwner('Hooray! New payment =) '.$paymentOrder->getAmount());
-                } else {
-                    if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
-                        $this->buy->cancelOrder($paymentOrder);
-                    }
-                }
-            }
+				if (isset($answer['orderStatus'])) {
+					$this->logger->info('Order status id '.$answer['orderStatus']);
+					if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_PAID) {
+						$this->buy->confirmOrder($paymentOrder);
+						$this->sender->sendToOwner('Hooray! New payment =) '.$paymentOrder->getAmount());
+					} else {
+						if ($this->statuses[$answer['orderStatus']] == PaymentOrderStatusRepository::STATUS_CANCELED) {
+							$this->buy->cancelOrder($paymentOrder);
+						}
+					}
+				}
+			}
         }
     }
 

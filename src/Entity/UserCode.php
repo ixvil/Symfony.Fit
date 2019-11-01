@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -31,7 +32,7 @@ class UserCode
     private $code;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="datetime")
      */
     private $timestamp;
 
@@ -74,7 +75,7 @@ class UserCode
         return $this->timestamp;
     }
 
-    public function setTimestamp(int $timestamp): self
+    public function setTimestamp(DateTime $timestamp): self
     {
         $this->timestamp = $timestamp;
 

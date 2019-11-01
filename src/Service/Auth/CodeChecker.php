@@ -41,7 +41,7 @@ class CodeChecker
         $criteria = Criteria::create()
             ->andWhere(Criteria::expr()->eq('user', $user))
             ->andWhere(Criteria::expr()->eq('code', $code))
-            ->andWhere(Criteria::expr()->gte('timestamp', 'now()-300'));
+            ->andWhere(Criteria::expr()->gte('timestamp', new \DateTime('10 minutes ago')));
 
         $userCodeCollection = $userCodeRepository->matching(
             $criteria

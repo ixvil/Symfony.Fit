@@ -46,9 +46,11 @@ class CodeProcessor
         $this->sender = $sender;
     }
 
-    /**
-     * @param User $user
-     */
+	/**
+	 * @param User $user
+	 *
+	 * @throws \Exception
+	 */
     public function process(User $user): void
     {
         $code = $this->codeGenerator->generate();
@@ -56,7 +58,7 @@ class CodeProcessor
         $userCode = new UserCode();
         $userCode
             ->setCode($code)
-			->setTimestamp(time())
+			->setTimestamp(new \DateTime())
             ->setUser($user)
             ->setIsUsed(false);
 

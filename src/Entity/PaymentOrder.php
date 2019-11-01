@@ -54,6 +54,12 @@ class PaymentOrder
      */
     private $userTicket;
 
+	/**
+	 * @ORM\Column(type="integer")
+	 */
+
+	private $bankPaymentId;
+
     /**
      * @ORM\Column(type="integer", nullable=true)
      */
@@ -159,4 +165,24 @@ class PaymentOrder
 
         return $this;
     }
+
+	/**
+	 * @param mixed $bankPaymentId
+	 *
+	 * @return PaymentOrder
+	 */
+	public function setBankPaymentId(?int $bankPaymentId)
+	{
+		$this->bankPaymentId = $bankPaymentId;
+
+		return $this;
+}
+
+	/**
+	 * @return mixed
+	 */
+	public function getBankPaymentId(): ?int
+	{
+		return $this->bankPaymentId;
+	}
 }

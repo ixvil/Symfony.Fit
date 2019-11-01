@@ -16,7 +16,9 @@ use App\Entity\UserTicket;
 use App\Repository\PaymentOrderStatusRepository;
 use App\Service\Discounts\Discounter;
 use App\Service\Sberbank\Client;
+use App\Service\Sberbank\Commands\Init;
 use App\Service\Sberbank\Commands\RegisterCommand;
+use App\Service\Sberbank\TinkoffClient;
 use App\Service\Sms\Sender;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
@@ -40,7 +42,7 @@ class Buy
     /**
      * @var Client
      */
-    private $sberbankClient;
+    private $bankClient;
     /**
      * @var PaymentOrderStatusRepository
      */
@@ -53,21 +55,27 @@ class Buy
      * @var Sender
      */
     private $sender;
+	/**
+	 * @var TinkoffClient
+	 */
+	private $tinkoffClient;
 
-    public function __construct(
+	public function __construct(
         EntityManager $entityManager,
-        Client $sberbankClient,
+        Client $bankClient,
         Discounter $discounter,
-        Sender $sender
+        Sender $sender,
+		TinkoffClient $tinkoffClient
     ) {
         $this->userTicketRepository = $entityManager->getRepository(UserTicket::class);
         $this->ticketPlanRepository = $entityManager->getRepository(TicketPlan::class);
         $this->paymentOrderStatusRepository = $entityManager->getRepository(PaymentOrderStatus::class);
         $this->entityManager = $entityManager;
-        $this->sberbankClient = $sberbankClient;
+        $this->bankClient = $bankClient;
         $this->discounter = $discounter;
         $this->sender = $sender;
-    }
+		$this->tinkoffClient = $tinkoffClient;
+	}
 
     /**
      * @param int  $ticketPlanId
@@ -174,11 +182,26 @@ class Buy
 
     public function registerCommand(PaymentOrder $paymentOrder): array
     {
-        $command = new RegisterCommand();
+		if($paymentOrder->getUser()->getId() == 30){
+			$command = new Init();
+			$command->setAmount($paymentOrder->getAmount());
+			$command->setOrderId($paymentOrder->getId());
+
+			$answer = $this->tinkoffClient->execute($command);
+
+			if(isset($answer['bank_payment_id'])){
+				$paymentOrder->setBankPaymentId($answer['bank_payment_id']);
+				$this->entityManager->persist($paymentOrder);
+				$this->entityManager->flush();
+			}
+			return $answer;
+		}
+
+		$command = new RegisterCommand();
         $command->setAmount($paymentOrder->getAmount());
         $command->setOrderNumber($paymentOrder->getId());
 
-        $answer = $this->sberbankClient->execute($command);
+        $answer = $this->bankClient->execute($command);
 
         return $answer;
     }

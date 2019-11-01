@@ -20,7 +20,7 @@ class Client
     private $client;
 
     /** @var string */
-    private $sberbankUrl;
+    private $bankUrl;
     /** @var string */
     private $login;
     /** @var string */
@@ -37,7 +37,7 @@ class Client
         $this->client = $client;
         $this->login = getenv('SBERBANK_LOGIN');
         $this->password = getenv('SBERBANK_PASSWORD');
-        $this->sberbankUrl = getenv('SBERBANK_URL');
+        $this->bankUrl = getenv('SBERBANK_URL');
     }
 
     /**
@@ -50,7 +50,7 @@ class Client
         try {
             $response = $this->client->request(
                 $command->getMethod(),
-                $this->sberbankUrl . $command->getPath(),
+                $this->bankUrl . $command->getPath(),
                 [
                     'form_params' => $command->getData() + [
                             'userName' => $this->login,
