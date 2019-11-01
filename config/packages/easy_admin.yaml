@@ -143,6 +143,15 @@ easy_admin:
     SalaryByMonth:
       class: App\Entity\SalaryByMonth
       disabled_actions: ['delete', 'edit', 'show', 'add']
+#      list:
+#        fields: ['date', 'trainer_id', 'trainer', 'cnt', 'summ']
+#        sort: ['date', 'desc']
+    
+    TicketPlan:
+      class: App\Entity\TicketPlan
+
+#    TicketPlanType:
+#      class: App\Entity\TicketPlanType
       
     Discount:
       class: App\Entity\Discount

@@ -20,7 +20,7 @@ class SalaryByMonth
      * @ORM\Column(type="integer")
      */
     private $year;
-
+    private $date;
     /**
      * @ORM\Column(type="integer")
      */
@@ -63,6 +63,10 @@ class SalaryByMonth
         return $this;
     }
 
+    public function getDate() :string
+    {
+	return $this->year.'.'.$this->month;
+    }
     public function getMonth(): ?int
     {
         return $this->month;
